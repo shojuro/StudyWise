@@ -26,6 +26,9 @@ class PreferencesManager @Inject constructor(
         val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val KEY_NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val KEY_STUDY_REMINDER_TIME = stringPreferencesKey("study_reminder_time")
+        val KEY_SCHOOL_ID = stringPreferencesKey("school_id")
+        val KEY_DAILY_REMINDERS = booleanPreferencesKey("daily_reminders")
+        val KEY_PROGRESS_UPDATES = booleanPreferencesKey("progress_updates")
     }
 
     val userPreferences: Flow<UserPreferences> = dataStore.data
@@ -115,6 +118,22 @@ class PreferencesManager @Inject constructor(
             } else {
                 preferences.remove(KEY_STUDY_REMINDER_TIME)
             }
+        }
+    }
+
+    suspend fun updateSchoolId(schoolId: String) {
+        dataStore.edit { preferences ->
+            preferences[KEY_SCHOOL_ID] = schoolId
+        }
+    }
+
+    suspend fun updateNotificationSettings(
+        enableDailyReminders: Boolean,
+        enableProgressUpdates: Boolean
+    ) {
+        dataStore.edit { preferences ->
+            preferences[KEY_DAILY_REMINDERS] = enableDailyReminders
+            preferences[KEY_PROGRESS_UPDATES] = enableProgressUpdates
         }
     }
 }

@@ -3,13 +3,9 @@
 echo "Building StudyWise Debug APK..."
 echo
 
-# Check if JAVA_HOME is set
-if [ -z "$JAVA_HOME" ]; then
-    echo "ERROR: JAVA_HOME is not set!"
-    echo "Please set JAVA_HOME to your JDK 17 installation path"
-    echo "Example: export JAVA_HOME=/usr/lib/jvm/java-17-openjdk"
-    exit 1
-fi
+# Set JAVA_HOME for Windows WSL environment
+export JAVA_HOME="/mnt/c/Program Files/Eclipse Adoptium/jdk-17.0.15.6-hotspot"
+export PATH="$JAVA_HOME/bin:$PATH"
 
 echo "Using Java from: $JAVA_HOME"
 echo

@@ -4,6 +4,12 @@ sealed class Screen(val route: String) {
     object Splash : Screen("splash")
     object Login : Screen("login")
     object Register : Screen("register")
+    object Onboarding : Screen("onboarding")
+    object SchoolSelection : Screen("school_selection")
+    object ProfileSetup : Screen("profile_setup/{userRole}") {
+        fun createRoute(userRole: String) = "profile_setup/$userRole"
+    }
+    object TwoFactorAuth : Screen("two_factor_auth")
     object Dashboard : Screen("dashboard")
     object LearningSession : Screen("learning_session/{subject}") {
         fun createRoute(subject: String) = "learning_session/$subject"

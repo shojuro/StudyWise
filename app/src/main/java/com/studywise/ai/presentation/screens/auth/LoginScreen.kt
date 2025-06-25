@@ -23,13 +23,15 @@ import com.studywise.ai.presentation.components.AccessibleButton
 import com.studywise.ai.presentation.components.AccessiblePasswordTextField
 import com.studywise.ai.presentation.components.AccessibleTextField
 import com.studywise.ai.presentation.components.AccessibleTextButton
+import com.studywise.ai.presentation.viewmodel.SharedAuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onLoginSuccess: (UserRole) -> Unit,
-    viewModel: LoginViewModel = hiltViewModel()
+    viewModel: LoginViewModel = hiltViewModel(),
+    sharedAuthViewModel: SharedAuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -170,6 +172,8 @@ fun LoginScreen(
             OutlinedButton(
                 onClick = {
                     // Simulate a successful student login for demo purposes
+                    sharedAuthViewModel.setDemoMode(true)
+                    sharedAuthViewModel.setUserRole(UserRole.STUDENT)
                     onLoginSuccess(UserRole.STUDENT)
                 },
                 modifier = Modifier

@@ -9,7 +9,9 @@
       "Bash(cmd.exe /c gradlew.bat assembleDebug)",
       "Bash(export:*)",
       "Bash(ls:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(./build.sh)",
+      "Bash(./build_wrapper.ps1)"
     ],
     "deny": []
   }
