@@ -4,44 +4,42 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.studywise.ai.ui.theme.MyApplicationTheme
+import androidx.compose.runtime.*
+import androidx.core.view.WindowCompat
+import com.studywise.ai.data.local.preferences.PreferencesManager
+import com.studywise.ai.presentation.navigation.StudyWiseNavigation
+import com.studywise.ai.presentation.theme.StudyWiseTheme
+import com.studywise.ai.presentation.theme.StudyWiseThemeSettings
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    
+    @Inject
+    lateinit var preferencesManager: PreferencesManager
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Enable edge-to-edge display
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
+        
         setContent {
-            MyApplicationTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            val themeSettings by preferencesManager.userPreferences.collectAsState(
+                initial = com.studywise.ai.data.local.preferences.UserPreferences()
+            )
+            
+            StudyWiseTheme(
+                themeSettings = StudyWiseThemeSettings(
+                    themeMode = themeSettings.themeMode,
+                    textScale = themeSettings.textSize,
+                    highContrast = themeSettings.highContrast
+                )
+            ) {
+                StudyWiseNavigation()
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MyApplicationTheme {
-        Greeting("Android")
     }
 }

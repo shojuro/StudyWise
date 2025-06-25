@@ -1,0 +1,16 @@
+package com.studywise.ai.presentation.navigation
+
+sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
+    object Login : Screen("login")
+    object Register : Screen("register")
+    object Dashboard : Screen("dashboard")
+    object LearningSession : Screen("learning_session/{subject}") {
+        fun createRoute(subject: String) = "learning_session/$subject"
+    }
+    object Progress : Screen("progress")
+    object Profile : Screen("profile")
+    object Settings : Screen("settings")
+    object ParentDashboard : Screen("parent_dashboard")
+    object TeacherDashboard : Screen("teacher_dashboard")
+}
