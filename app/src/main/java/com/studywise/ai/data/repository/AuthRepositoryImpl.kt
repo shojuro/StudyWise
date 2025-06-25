@@ -185,7 +185,7 @@ class AuthRepositoryImpl @Inject constructor(
             role = role,
             grade = grade,
             createdAt = createdAt,
-            lastLoginAt = lastLoginAt?.let { Date(it) },
+            lastLoginAt = lastLoginAt,
             isActive = isActive,
             parentId = parentId
         )
@@ -200,7 +200,7 @@ class AuthRepositoryImpl @Inject constructor(
             role = role,
             grade = grade,
             createdAt = createdAt,
-            lastLoginAt = lastLoginAt?.time,
+            lastLoginAt = lastLoginAt,
             isActive = isActive,
             parentId = parentId
         )

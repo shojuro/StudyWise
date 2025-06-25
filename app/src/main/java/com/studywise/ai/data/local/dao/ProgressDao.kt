@@ -22,9 +22,8 @@ interface ProgressDao {
     fun getUserProgressByGrade(userId: String, gradeLevel: Int): Flow<List<ProgressEntity>>
 
     @Query("""
-        SELECT p.*, s.name as skillName, s.category 
+        SELECT p.* 
         FROM progress p 
-        INNER JOIN skills s ON p.skillId = s.id 
         WHERE p.userId = :userId 
         ORDER BY p.masteryLevel DESC 
         LIMIT :limit
@@ -32,9 +31,8 @@ interface ProgressDao {
     fun getTopMasteredSkills(userId: String, limit: Int): Flow<List<ProgressEntity>>
 
     @Query("""
-        SELECT p.*, s.name as skillName, s.category 
+        SELECT p.* 
         FROM progress p 
-        INNER JOIN skills s ON p.skillId = s.id 
         WHERE p.userId = :userId 
         AND p.masteryLevel < 0.7
         ORDER BY p.lastPracticedAt ASC 

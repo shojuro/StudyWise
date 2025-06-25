@@ -36,7 +36,7 @@ fun LoginScreen(
 
     LaunchedEffect(uiState.loginSuccess, uiState.userRole) {
         if (uiState.loginSuccess && uiState.userRole != null) {
-            onLoginSuccess(uiState.userRole)
+            onLoginSuccess(uiState.userRole!!)
         }
     }
 
@@ -120,10 +120,10 @@ fun LoginScreen(
                 )
             )
 
-            if (uiState.generalError != null) {
+            uiState.generalError?.let { error ->
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = uiState.generalError,
+                    text = error,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 24.dp)

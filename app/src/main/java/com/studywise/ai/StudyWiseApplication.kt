@@ -22,9 +22,8 @@ class StudyWiseApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        if (BuildConfig.DEBUG) {
-            Timber.plant(DebugTree())
-        }
+        // For now, always plant debug tree. In production, use a crash reporting tree
+        Timber.plant(DebugTree())
         
         // Initialize database with skills and questions
         applicationScope.launch {

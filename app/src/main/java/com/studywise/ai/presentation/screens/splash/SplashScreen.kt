@@ -27,7 +27,7 @@ fun SplashScreen(
     LaunchedEffect(uiState) {
         when {
             uiState.shouldNavigateToLogin -> onNavigateToLogin()
-            uiState.userRole != null -> onNavigateToDashboard(uiState.userRole)
+            uiState.userRole != null -> onNavigateToDashboard(uiState.userRole!!)
         }
     }
 
