@@ -83,6 +83,7 @@ dependencies {
     
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
     
     // WorkManager
     implementation(libs.work.runtime.ktx)
@@ -97,6 +98,18 @@ dependencies {
     // Accompanist
     implementation(libs.accompanist.permissions)
     implementation(libs.accompanist.systemuicontroller)
+    
+    // ML Kit
+    implementation(libs.mlkit.text.recognition)
+    
+    // CameraX
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    
+    // Document Processing - removed due to Android compatibility issues
+    // Apache POI and PDFBox require API 26+
     
     // Testing
     testImplementation(libs.junit)

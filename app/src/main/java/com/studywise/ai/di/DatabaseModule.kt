@@ -24,7 +24,9 @@ object DatabaseModule {
             context,
             StudyWiseDatabase::class.java,
             StudyWiseDatabase.DATABASE_NAME
-        ).build()
+        )
+        .fallbackToDestructiveMigration() // For development only
+        .build()
     }
 
     @Provides

@@ -5,7 +5,11 @@
       "Bash(./gradlew:*)",
       "Bash(rm:*)",
       "Bash(chmod:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(cmd.exe /c gradlew.bat assembleDebug)",
+      "Bash(export:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

@@ -32,11 +32,6 @@ fun StudentDashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(uiState.selectedSubject) {
-        uiState.selectedSubject?.let { subject ->
-            onNavigateToSession(subject)
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -142,7 +137,7 @@ fun StudentDashboardScreen(
                         subject = subject.subject,
                         progress = subject.progress,
                         lastPracticed = subject.lastPracticed,
-                        onClick = { viewModel.onSubjectSelected(subject.subject) },
+                        onClick = { onNavigateToSession(subject.subject) },
                         modifier = Modifier.fillMaxWidth(),
                         subjectColor = SubjectColors[subject.subject] ?: MaterialTheme.colorScheme.primary
                     )

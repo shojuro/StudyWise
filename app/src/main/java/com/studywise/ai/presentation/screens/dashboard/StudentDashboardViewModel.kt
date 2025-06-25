@@ -71,14 +71,10 @@ class StudentDashboardViewModel @Inject constructor(
         }
     }
 
-    fun onSubjectSelected(subject: String) {
-        _uiState.value = _uiState.value.copy(selectedSubject = subject)
-    }
 }
 
 data class StudentDashboardUiState(
     val userName: String = "",
     val subjects: List<SubjectProgress> = emptyList(),
-    val isLoading: Boolean = true,
-    val selectedSubject: String? = null
+    val isLoading: Boolean = true
 )

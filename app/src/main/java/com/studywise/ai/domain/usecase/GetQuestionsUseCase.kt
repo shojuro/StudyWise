@@ -3,8 +3,6 @@ package com.studywise.ai.domain.usecase
 import com.studywise.ai.data.local.dao.QuestionDao
 import com.studywise.ai.data.local.dao.SkillDao
 import com.studywise.ai.domain.model.Question
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import javax.inject.Inject
 
 class GetQuestionsUseCase @Inject constructor(
@@ -34,13 +32,17 @@ class GetQuestionsUseCase @Inject constructor(
         return allQuestions.take(count).map { entity ->
             Question(
                 id = entity.id,
+                text = entity.prompt,
+                type = entity.type,
+                difficulty = com.studywise.ai.domain.model.QuestionDifficulty.valueOf(entity.difficulty),
+                hints = entity.hints.split("|").filter { it.isNotEmpty() },
+                correctAnswer = entity.correctAnswer ?: "Student's thoughtful response",
+                explanation = entity.explanation ?: "Good thinking! Keep exploring the text.",
+                options = entity.options?.split("|")?.filter { it.isNotEmpty() },
                 skillId = entity.skillId,
                 skillName = skillName,
                 gradeLevel = entity.gradeLevel,
-                prompt = entity.prompt,
-                hints = parseJsonList(entity.hints),
-                followUpQuestions = entity.followUpQuestions?.let { parseJsonList(it) } ?: emptyList(),
-                skillSubCategory = entity.skillSubCategory
+                followUpQuestions = entity.followUpQuestions?.split("|")?.filter { it.isNotEmpty() } ?: emptyList()
             )
         }
     }
@@ -80,14 +82,5 @@ class GetQuestionsUseCase @Inject constructor(
         }
 
         return allQuestions.shuffled().take(count)
-    }
-
-    private fun parseJsonList(json: String): List<String> {
-        return try {
-            val type = object : TypeToken<List<String>>() {}.type
-            Gson().fromJson(json, type)
-        } catch (e: Exception) {
-            emptyList()
-        }
     }
 }

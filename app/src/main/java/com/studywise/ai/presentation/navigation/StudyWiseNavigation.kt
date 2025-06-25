@@ -89,16 +89,24 @@ fun StudyWiseNavigation(
         composable(Screen.Dashboard.route) {
             StudentDashboardScreen(
                 onNavigateToSession = { subject ->
-                    navController.navigate(Screen.LearningSession.createRoute(subject))
+                    navController.navigate(Screen.LearningSession.createRoute(subject)) {
+                        launchSingleTop = true
+                    }
                 },
                 onNavigateToProgress = {
-                    navController.navigate(Screen.Progress.route)
+                    navController.navigate(Screen.Progress.route) {
+                        launchSingleTop = true
+                    }
                 },
                 onNavigateToProfile = {
-                    navController.navigate(Screen.Profile.route)
+                    navController.navigate(Screen.Profile.route) {
+                        launchSingleTop = true
+                    }
                 },
                 onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route)
+                    navController.navigate(Screen.Settings.route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }

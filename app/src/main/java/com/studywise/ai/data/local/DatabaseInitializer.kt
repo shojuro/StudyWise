@@ -9,6 +9,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -183,14 +184,17 @@ class DatabaseInitializer @Inject constructor(
                     skillId = data.skillId,
                     gradeLevel = data.gradeLevel,
                     prompt = data.prompt,
-                    hints = gson.toJson(data.hints),
-                    followUpQuestions = gson.toJson(
-                        listOf(
-                            "What made you think of that?",
-                            "Can you find another example?",
-                            "How does this connect to the story's message?"
-                        )
-                    )
+                    hints = data.hints.joinToString("|"),
+                    type = "comprehension",
+                    difficulty = "MEDIUM",
+                    correctAnswer = "Student's thoughtful response",
+                    explanation = "Good readers think about what they read and can explain their thinking.",
+                    followUpQuestions = listOf(
+                        "What made you think of that?",
+                        "Can you find another example?",
+                        "How does this connect to the story's message?"
+                    ).joinToString("|"),
+                    createdAt = Date()
                 )
             )
         }
