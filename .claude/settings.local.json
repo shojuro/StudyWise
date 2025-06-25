@@ -11,7 +11,8 @@
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(./build.sh)",
-      "Bash(./build_wrapper.ps1)"
+      "Bash(./build_wrapper.ps1)",
+      "Bash(cmd.exe /c \"set JAVA_HOME=C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.15.6-hotspot && gradlew.bat assembleDebug\")"
     ],
     "deny": []
   }

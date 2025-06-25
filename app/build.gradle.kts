@@ -19,6 +19,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // OpenAI API Key - Should be provided via local.properties or environment variable
+        val openAiApiKey = project.findProperty("OPENAI_API_KEY")?.toString() ?: "YOUR_API_KEY_HERE"
+        buildConfigField("String", "OPENAI_API_KEY", "\"$openAiApiKey\"")
     }
 
     buildTypes {
@@ -41,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -101,6 +106,7 @@ dependencies {
     
     // ML Kit
     implementation(libs.mlkit.text.recognition)
+    implementation(libs.mlkit.image.labeling)
     
     // CameraX
     implementation(libs.camerax.core)

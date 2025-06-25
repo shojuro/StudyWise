@@ -26,6 +26,7 @@ import com.studywise.ai.presentation.screens.progress.ProgressScreen
 import com.studywise.ai.presentation.screens.profile.ProfileScreen
 import com.studywise.ai.presentation.screens.settings.SettingsScreen
 import com.studywise.ai.presentation.screens.splash.SplashScreen
+import com.studywise.ai.presentation.screens.learning.PhotoLearningScreen
 import com.studywise.ai.presentation.viewmodel.SharedAuthViewModel
 
 @Composable
@@ -183,6 +184,11 @@ fun StudyWiseNavigation(
                     navController.navigate(Screen.Settings.route) {
                         launchSingleTop = true
                     }
+                },
+                onNavigateToPhotoLearning = {
+                    navController.navigate(Screen.PhotoLearning.route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -250,6 +256,14 @@ fun StudyWiseNavigation(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        composable(Screen.PhotoLearning.route) {
+            PhotoLearningScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

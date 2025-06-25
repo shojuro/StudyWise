@@ -1,9 +1,11 @@
 package com.studywise.ai.di
 
+import com.studywise.ai.data.repository.AIRepositoryImpl
 import com.studywise.ai.data.repository.AuthRepositoryImpl
 import com.studywise.ai.data.repository.QuestionRepositoryImpl
 import com.studywise.ai.data.repository.SchoolRepositoryImpl
 import com.studywise.ai.data.repository.UserRepositoryImpl
+import com.studywise.ai.domain.repository.AIRepository
 import com.studywise.ai.domain.repository.AuthRepository
 import com.studywise.ai.domain.repository.QuestionRepository
 import com.studywise.ai.domain.repository.SchoolRepository
@@ -41,4 +43,10 @@ abstract class RepositoryModule {
     abstract fun bindSchoolRepository(
         schoolRepositoryImpl: SchoolRepositoryImpl
     ): SchoolRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAIRepository(
+        aiRepositoryImpl: AIRepositoryImpl
+    ): AIRepository
 }

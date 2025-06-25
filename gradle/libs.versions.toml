@@ -95,6 +95,7 @@ hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testi
 
 # ML Kit
 mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkit-text-recognition" }
+mlkit-image-labeling = { group = "com.google.mlkit", name = "image-labeling", version = "17.0.8" }
 
 # CameraX
 camerax-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
