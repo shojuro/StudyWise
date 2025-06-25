@@ -164,6 +164,22 @@ fun LoginScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Demo Mode Button for Testing
+            OutlinedButton(
+                onClick = {
+                    // Simulate a successful student login for demo purposes
+                    onLoginSuccess(UserRole.STUDENT)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                enabled = !uiState.isLoading
+            ) {
+                Text("Try Demo Mode (Student)")
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }

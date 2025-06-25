@@ -86,7 +86,7 @@ class RegisterViewModel @Inject constructor(
                 name = _uiState.value.name.trim(),
                 email = _uiState.value.email.trim(),
                 password = _uiState.value.password,
-                role = _uiState.value.selectedRole,
+                role = _uiState.value.selectedRole.name,
                 grade = if (_uiState.value.selectedRole == UserRole.STUDENT) _uiState.value.selectedGrade else null
             )
 
