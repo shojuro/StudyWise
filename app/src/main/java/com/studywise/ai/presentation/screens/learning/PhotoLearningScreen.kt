@@ -167,17 +167,30 @@ fun PhotoLearningScreen(
                 }
             }
             
-            // Error snackbar
-            uiState.error?.let { error ->
-                Snackbar(
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    action = {
-                        TextButton(onClick = { viewModel.resetLesson() }) {
-                            Text("Dismiss")
+            // Manual entry dialog
+            if (uiState.showManualEntry) {
+                ManualObjectEntryDialog(
+                    currentValue = uiState.manualObjectName,
+                    onValueChange = viewModel::onManualObjectNameChange,
+                    onSubmit = { viewModel.submitManualObject() },
+                    onDismiss = { viewModel.dismissManualEntry() },
+                    error = uiState.error
+                )
+            }
+            
+            // Error snackbar (only show if not showing manual entry)
+            if (!uiState.showManualEntry) {
+                uiState.error?.let { errorText ->
+                    Snackbar(
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        action = {
+                            TextButton(onClick = { viewModel.resetLesson() }) {
+                                Text("Try Again")
+                            }
                         }
+                    ) {
+                        Text(errorText)
                     }
-                ) {
-                    Text(error)
                 }
             }
         }
@@ -659,4 +672,86 @@ private fun createTempPhotoUri(context: android.content.Context): Uri? {
     } catch (e: Exception) {
         null
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun ManualObjectEntryDialog(
+    currentValue: String,
+    onValueChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onDismiss: () -> Unit,
+    error: String?
+) {
+    val commonObjects = listOf(
+        "pen", "pencil", "paper", "notebook", "book", "eraser",
+        "ruler", "scissors", "glue", "tape", "marker", "crayon",
+        "backpack", "calculator", "clock", "keys", "water bottle"
+    )
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Enter Object Name") },
+        text = {
+            Column {
+                error?.let { errorText ->
+                    Text(
+                        text = errorText,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                
+                Text(
+                    text = "The AI couldn't identify the object. What is it?",
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                TextField(
+                    value = currentValue,
+                    onValueChange = onValueChange,
+                    label = { Text("Object name") },
+                    placeholder = { Text("e.g., pen, book, clock") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Common objects:",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    commonObjects.forEach { obj ->
+                        SuggestionChip(
+                            onClick = { onValueChange(obj) },
+                            label = { Text(obj) },
+                            modifier = Modifier.height(32.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onSubmit,
+                enabled = currentValue.isNotBlank()
+            ) {
+                Text("Submit")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

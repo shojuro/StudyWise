@@ -60,6 +60,54 @@ class AIRepositoryImpl @Inject constructor(
         }
     }
     
+    override suspend fun generateContentForManualObject(objectName: String): Result<IdentifiedObject> {
+        // For AIRepositoryImpl (non-hybrid), generate content directly
+        // Use the same approach as identifyObject but with manual input
+        return generateEducationalContentForObject(objectName, 1.0f)
+    }
+    
+    private suspend fun generateEducationalContentForObject(objectName: String, confidence: Float): Result<IdentifiedObject> {
+        val prompt = """
+            You are an expert English teacher and educational content creator. Always use perfect grammar, proper punctuation, and age-appropriate language.
+            
+            Please provide educational content about: $objectName
+            
+            IMPORTANT: Use grammatically perfect English.
+            
+            1. A child-friendly name for this object
+            2. A simple, grammatically correct description (1-2 sentences)
+            3. The general category it belongs to
+            4. Educational value for children learning about this
+            
+            Format your response as JSON:
+            {
+                "name": "friendly name",
+                "description": "simple description with perfect grammar",
+                "category": "category",
+                "educationalValue": "what children can learn"
+            }
+            
+            Double-check your response for any spelling or grammar errors before responding.
+        """.trimIndent()
+        
+        return safeApiCall {
+            val response = openAIService.createChatCompletion(
+                authHeader = authHeader,
+                request = ChatCompletionRequest(
+                    messages = listOf(
+                        Message(role = "system", content = "You are an educational AI helping children learn about objects in their environment."),
+                        Message(role = "user", content = prompt)
+                    ),
+                    temperature = 0.7f,
+                    max_tokens = 200
+                )
+            )
+            
+            val jsonResponse = response.choices.firstOrNull()?.message?.content ?: ""
+            parseObjectFromJson(jsonResponse, confidence)
+        }
+    }
+    
     override suspend fun identifyObject(imageUri: Uri): Result<IdentifiedObject> {
         return try {
             // First, use ML Kit to get initial labels
@@ -72,25 +120,36 @@ class AIRepositoryImpl @Inject constructor(
             }
             
             val topLabel = labels.maxByOrNull { it.confidence } ?: labels.first()
+            
+            // Add confidence threshold - reject low confidence detections
+            if (topLabel.confidence < 0.7f) {
+                return Result.failure(Exception("Unable to identify object with high confidence (${(topLabel.confidence * 100).toInt()}%). Please try another photo or enter the object manually."))
+            }
+            
             val objectName = topLabel.text
             
             // Then use ChatGPT to get more educational context
             val prompt = """
-                An image has been identified as containing: $objectName
+                You are an expert English teacher and educational content creator. Always use perfect grammar, proper punctuation, and age-appropriate language.
                 
-                Please provide:
+                An image has been identified as containing: $objectName (confidence: ${(topLabel.confidence * 100).toInt()}%)
+                
+                Please provide educational content about this object. IMPORTANT: Use grammatically perfect English.
+                
                 1. A child-friendly name for this object
-                2. A simple description (1-2 sentences)
+                2. A simple, grammatically correct description (1-2 sentences)
                 3. The general category it belongs to
                 4. Educational value for children learning about this
                 
                 Format your response as JSON:
                 {
                     "name": "friendly name",
-                    "description": "simple description",
+                    "description": "simple description with perfect grammar",
                     "category": "category",
                     "educationalValue": "what children can learn"
                 }
+                
+                Double-check your response for any spelling or grammar errors before responding.
             """.trimIndent()
             
             // Use safeApiCall for ChatGPT request
@@ -128,22 +187,36 @@ class AIRepositoryImpl @Inject constructor(
         
         val result = safeApiCall {
             val prompt = """
+                You are an expert English teacher. Generate grammatically perfect example sentences.
+                
                 Generate example sentences using the word "$word" for grades $minGrade through $maxGrade.
+                
+                CRITICAL: Every sentence must have perfect grammar, spelling, and punctuation.
                 
                 For each grade level, provide 3 sentences that:
                 - Use age-appropriate vocabulary
                 - Increase in complexity with grade level
                 - Are educational and engaging
+                - Have absolutely perfect grammar
+                - Use proper capitalization and punctuation
+                
+                Common mistakes to avoid:
+                - Double letters where they don't belong (wondereed → wondered)
+                - Incorrect articles (the space → space, a apple → an apple)
+                - Missing punctuation
+                - Incomplete sentences
                 
                 Format your response as:
                 Grade 2:
-                - [sentence 1]
-                - [sentence 2]
-                - [sentence 3]
+                - [grammatically perfect sentence 1]
+                - [grammatically perfect sentence 2]
+                - [grammatically perfect sentence 3]
                 
                 Grade 3:
-                - [sentence 1]
+                - [grammatically perfect sentence 1]
                 ... and so on
+                
+                Double-check each sentence for errors before including it.
             """.trimIndent()
             
             val response = openAIService.createChatCompletion(
@@ -192,25 +265,36 @@ class AIRepositoryImpl @Inject constructor(
         
         val result = safeApiCall {
             val prompt = """
+                You are an expert educator and English teacher. Create grammatically perfect educational content.
+                
                 Create a $duration-minute Socratic lesson about "$objectName" for a grade $grade student.
                 
+                CRITICAL REQUIREMENTS:
+                - All questions must have perfect grammar and punctuation
+                - Check for proper verb conjugation (wondered, not wondereed)
+                - Use correct articles (a, an, the) appropriately
+                - Ensure all sentences are complete and clear
+                
                 Include:
-                1. Learning objectives (2-3)
-                2. An engaging initial question to spark curiosity
-                3. 5-7 guiding questions that lead to discovery
-                4. 3-4 vocabulary words with definitions and examples
-                5. 2-3 fun facts
+                1. Learning objectives (2-3) - grammatically correct
+                2. An engaging initial question to spark curiosity (with perfect grammar)
+                3. 5-7 guiding questions that lead to discovery (all grammatically correct)
+                4. 3-4 vocabulary words with proper definitions and example sentences
+                5. 2-3 fun facts written in proper English
                 
                 Use the Socratic method - ask questions that guide discovery rather than giving direct answers.
-                Make it age-appropriate and engaging.
+                Make it age-appropriate and engaging while maintaining perfect grammar.
+                
+                Example of good grammar: "Have you ever wondered about outer space?"
+                Example of bad grammar: "Have you ever wondereed about the outer space?"
                 
                 Format as JSON:
                 {
                     "learningObjectives": ["objective1", "objective2"],
-                    "initialQuestion": "question",
-                    "guidingQuestions": ["q1", "q2", ...],
+                    "initialQuestion": "grammatically perfect question",
+                    "guidingQuestions": ["grammatically correct q1", "grammatically correct q2", ...],
                     "vocabularyWords": [
-                        {"word": "word1", "definition": "def", "exampleSentence": "example", "gradeLevel": $grade}
+                        {"word": "word1", "definition": "proper definition", "exampleSentence": "grammatically correct example", "gradeLevel": $grade}
                     ],
                     "funFacts": ["fact1", "fact2"]
                 }

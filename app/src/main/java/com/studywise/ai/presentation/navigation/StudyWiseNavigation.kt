@@ -27,6 +27,8 @@ import com.studywise.ai.presentation.screens.profile.ProfileScreen
 import com.studywise.ai.presentation.screens.settings.SettingsScreen
 import com.studywise.ai.presentation.screens.splash.SplashScreen
 import com.studywise.ai.presentation.screens.learning.PhotoLearningScreen
+import com.studywise.ai.presentation.screens.analytics.AnalyticsScreen
+import com.studywise.ai.presentation.screens.progress.SubjectProgressDetailScreen
 import com.studywise.ai.presentation.viewmodel.SharedAuthViewModel
 
 @Composable
@@ -235,6 +237,19 @@ fun StudyWiseNavigation(
             ProgressScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToSubjectDetail = { subject ->
+                    navController.navigate(Screen.SubjectProgressDetail.createRoute(subject))
+                }
+            )
+        }
+        
+        composable(Screen.SubjectProgressDetail.route) { backStackEntry ->
+            val subject = backStackEntry.arguments?.getString("subject") ?: ""
+            SubjectProgressDetailScreen(
+                subject = subject,
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -256,12 +271,23 @@ fun StudyWiseNavigation(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onNavigateToAnalytics = {
+                    navController.navigate(Screen.Analytics.route)
                 }
             )
         }
 
         composable(Screen.PhotoLearning.route) {
             PhotoLearningScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        
+        composable(Screen.Analytics.route) {
+            AnalyticsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }

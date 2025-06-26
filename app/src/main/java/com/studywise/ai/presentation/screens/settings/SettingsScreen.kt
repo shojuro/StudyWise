@@ -23,6 +23,7 @@ import kotlinx.coroutines.delay
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onLogout: () -> Unit,
+    onNavigateToAnalytics: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -164,6 +165,18 @@ fun SettingsScreen(
                     description = "Sign out of your account",
                     icon = Icons.Default.Logout,
                     onClick = { viewModel.showLogoutDialog() }
+                )
+            }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+            // Developer Section
+            SettingsSection(title = "Developer") {
+                SettingsItem(
+                    title = "Analytics Dashboard",
+                    description = "View app usage analytics",
+                    icon = Icons.Default.Analytics,
+                    onClick = onNavigateToAnalytics
                 )
             }
 

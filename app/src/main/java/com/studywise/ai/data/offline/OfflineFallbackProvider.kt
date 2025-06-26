@@ -8,19 +8,45 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class OfflineFallbackProvider @Inject constructor() {
+class OfflineFallbackProvider @Inject constructor(
+    private val offlineContentDatabase: OfflineContentDatabase
+) {
     
     fun getOfflineObjectIdentification(objectName: String, confidence: Float): IdentifiedObject {
-        return IdentifiedObject(
-            name = objectName,
-            description = "This is a $objectName. When you're online, I can tell you much more about it!",
-            category = "General",
-            confidence = confidence,
-            educationalValue = "Every object around us has something interesting to teach us. Let's explore this $objectName together!"
-        )
+        // Try to get from offline database first
+        val content = offlineContentDatabase.getObjectContent(objectName)
+        
+        return if (content != null) {
+            IdentifiedObject(
+                name = content.name,
+                description = content.description,
+                category = content.category,
+                confidence = confidence,
+                educationalValue = content.educationalValue
+            )
+        } else {
+            IdentifiedObject(
+                name = objectName,
+                description = "This is a $objectName. When you're online, I can tell you much more about it!",
+                category = "General",
+                confidence = confidence,
+                educationalValue = "Every object around us has something interesting to teach us. Let's explore this $objectName together!"
+            )
+        }
     }
     
     fun getOfflineGradedSentences(word: String, minGrade: Int, maxGrade: Int): Map<Int, List<String>> {
+        // Try to get from offline database first
+        val content = offlineContentDatabase.getObjectContent(word)
+        
+        if (content != null) {
+            // Filter sentences for requested grade range
+            return content.gradedSentences.filterKeys { grade ->
+                grade in minGrade..maxGrade
+            }
+        }
+        
+        // Fallback to generic sentences
         val sentences = mutableMapOf<Int, List<String>>()
         
         for (grade in minGrade..maxGrade) {
@@ -52,35 +78,44 @@ class OfflineFallbackProvider @Inject constructor() {
     }
     
     fun getOfflineSocraticLesson(objectName: String, grade: Int, duration: Int): SocraticLesson {
-        val gradeAdjustedQuestions = when {
-            grade <= 3 -> listOf(
-                "What do you see when you look at this $objectName?",
-                "What color is it?",
-                "How does it feel when you touch it?",
-                "What do you think it's used for?",
-                "Can you find other things that are similar?"
-            )
-            grade <= 5 -> listOf(
-                "What makes this $objectName special?",
-                "How do you think it was made?",
-                "Why do people use this?",
-                "What would happen if we didn't have this?",
-                "Can you think of ways to improve it?"
-            )
-            grade <= 8 -> listOf(
-                "What properties does this $objectName have?",
-                "How has this changed over time?",
-                "What scientific principles does it demonstrate?",
-                "How does this impact our daily lives?",
-                "What connections can you make to other subjects?"
-            )
-            else -> listOf(
-                "What underlying principles govern this $objectName?",
-                "How does this relate to broader concepts?",
-                "What innovations could transform this?",
-                "What ethical considerations are involved?",
-                "How might this evolve in the future?"
-            )
+        // Try to get from offline database first
+        val content = offlineContentDatabase.getObjectContent(objectName)
+        
+        val gradeAdjustedQuestions = if (content != null) {
+            // Use pre-written questions if available
+            content.socraticQuestions
+        } else {
+            // Fallback to generic questions
+            when {
+                grade <= 3 -> listOf(
+                    "What do you see when you look at this $objectName?",
+                    "What color is it?",
+                    "How does it feel when you touch it?",
+                    "What do you think it's used for?",
+                    "Can you find other things that are similar?"
+                )
+                grade <= 5 -> listOf(
+                    "What makes this $objectName special?",
+                    "How do you think it was made?",
+                    "Why do people use this?",
+                    "What would happen if we didn't have this?",
+                    "Can you think of ways to improve it?"
+                )
+                grade <= 8 -> listOf(
+                    "What properties does this $objectName have?",
+                    "How has this changed over time?",
+                    "What scientific principles does it demonstrate?",
+                    "How does this impact our daily lives?",
+                    "What connections can you make to other subjects?"
+                )
+                else -> listOf(
+                    "What underlying principles govern this $objectName?",
+                    "How does this relate to broader concepts?",
+                    "What innovations could transform this?",
+                    "What ethical considerations are involved?",
+                    "How might this evolve in the future?"
+                )
+            }
         }
         
         return SocraticLesson(

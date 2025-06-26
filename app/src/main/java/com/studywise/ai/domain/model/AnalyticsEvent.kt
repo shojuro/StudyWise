@@ -140,4 +140,10 @@ sealed class AnalyticsEvent(
             "screen" to screen
         )
     )
+    
+    // Generic Custom Event for extensions
+    class CustomEvent(
+        eventName: String,
+        parameters: Map<String, Any> = emptyMap()
+    ) : AnalyticsEvent(eventName, parameters)
 }

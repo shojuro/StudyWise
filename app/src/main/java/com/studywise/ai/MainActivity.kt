@@ -7,6 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
 import androidx.core.view.WindowCompat
 import com.studywise.ai.data.local.preferences.PreferencesManager
+import com.studywise.ai.domain.model.AnalyticsEvent
+import com.studywise.ai.domain.service.AnalyticsService
 import com.studywise.ai.presentation.navigation.StudyWiseNavigation
 import com.studywise.ai.presentation.theme.StudyWiseTheme
 import com.studywise.ai.presentation.theme.StudyWiseThemeSettings
@@ -19,8 +21,14 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var preferencesManager: PreferencesManager
     
+    @Inject
+    lateinit var analyticsService: AnalyticsService
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Log app opened event
+        analyticsService.logSessionStart()
         
         // Enable edge-to-edge display
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -41,5 +49,11 @@ class MainActivity : ComponentActivity() {
                 StudyWiseNavigation()
             }
         }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // Log session end when app is closed
+        analyticsService.logSessionEnd()
     }
 }

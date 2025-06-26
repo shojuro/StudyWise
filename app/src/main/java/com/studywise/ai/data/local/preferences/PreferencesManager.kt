@@ -29,6 +29,9 @@ class PreferencesManager @Inject constructor(
         val KEY_SCHOOL_ID = stringPreferencesKey("school_id")
         val KEY_DAILY_REMINDERS = booleanPreferencesKey("daily_reminders")
         val KEY_PROGRESS_UPDATES = booleanPreferencesKey("progress_updates")
+        val KEY_LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
+        val KEY_SYNC_ENABLED = booleanPreferencesKey("sync_enabled")
+        val KEY_SYNC_WIFI_ONLY = booleanPreferencesKey("sync_wifi_only")
     }
 
     val userPreferences: Flow<UserPreferences> = dataStore.data
@@ -52,7 +55,10 @@ class PreferencesManager @Inject constructor(
                 highContrast = preferences[KEY_HIGH_CONTRAST] ?: false,
                 onboardingCompleted = preferences[KEY_ONBOARDING_COMPLETED] ?: false,
                 notificationsEnabled = preferences[KEY_NOTIFICATIONS_ENABLED] ?: true,
-                studyReminderTime = preferences[KEY_STUDY_REMINDER_TIME]
+                studyReminderTime = preferences[KEY_STUDY_REMINDER_TIME],
+                lastSyncTime = preferences[KEY_LAST_SYNC_TIME],
+                syncEnabled = preferences[KEY_SYNC_ENABLED] ?: true,
+                syncWifiOnly = preferences[KEY_SYNC_WIFI_ONLY] ?: true
             )
         }
 
@@ -136,6 +142,19 @@ class PreferencesManager @Inject constructor(
             preferences[KEY_PROGRESS_UPDATES] = enableProgressUpdates
         }
     }
+    
+    suspend fun updateLastSyncTime(timestamp: Long) {
+        dataStore.edit { preferences ->
+            preferences[KEY_LAST_SYNC_TIME] = timestamp
+        }
+    }
+    
+    suspend fun updateSyncSettings(enabled: Boolean, wifiOnly: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[KEY_SYNC_ENABLED] = enabled
+            preferences[KEY_SYNC_WIFI_ONLY] = wifiOnly
+        }
+    }
 }
 
 data class UserPreferences(
@@ -149,7 +168,10 @@ data class UserPreferences(
     val highContrast: Boolean = false,
     val onboardingCompleted: Boolean = false,
     val notificationsEnabled: Boolean = true,
-    val studyReminderTime: String? = null
+    val studyReminderTime: String? = null,
+    val lastSyncTime: Long? = null,
+    val syncEnabled: Boolean = true,
+    val syncWifiOnly: Boolean = true
 )
 
 enum class ThemeMode(val value: String) {

@@ -39,5 +39,10 @@ data class ProgressEntity(
     val questionsCorrect: Int = 0,
     val lastPracticedAt: Date? = null,
     val streakDays: Int = 0,
-    val totalPointsEarned: Int = 0
+    val totalPointsEarned: Int = 0,
+    val subject: String = "",
+    val questionsAnswered: Int = questionsAttempted,
+    val correctAnswers: Int = questionsCorrect,
+    val updatedAt: Date = Date(),
+    val syncStatus: SyncStatus = SyncStatus.PENDING
 )

@@ -25,6 +25,7 @@ StudyWise is an Android educational app (K-12) with AI-powered personalization. 
 
 ## Common Commands
 
+### Linux/Mac
 ```bash
 # Build and install
 ./gradlew clean assembleDebug
@@ -39,6 +40,23 @@ StudyWise is an Android educational app (K-12) with AI-powered personalization. 
 
 # Run app on connected device
 ./gradlew installDebug && adb shell am start -n com.studywise.ai/.MainActivity
+```
+
+### Windows
+```batch
+# Set JAVA_HOME (if not already set)
+set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.15.6-hotspot
+
+# Build and install
+gradlew.bat clean assembleDebug
+gradlew.bat installDebug
+
+# Run tests
+gradlew.bat test                    # Unit tests
+gradlew.bat connectedAndroidTest    # Instrumented tests
+
+# Run app on connected device
+gradlew.bat installDebug && adb shell am start -n com.studywise.ai/.MainActivity
 ```
 
 ## Architecture
@@ -60,6 +78,7 @@ app/src/main/java/com/studywise/ai/
 - **Kotlin**: 2.0.21
 - **Compose BOM**: 2024.09.00
 - **Java**: 17 (Required for Google Play Store deployment - already installed)
+  - **JAVA_HOME**: `C:\Program Files\Eclipse Adoptium\jdk-17.0.15.6-hotspot`
 
 ## Accessibility Requirements (WCAG 2.1 AA)
 

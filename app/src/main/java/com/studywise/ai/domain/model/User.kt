@@ -9,9 +9,11 @@ data class User(
     val email: String,
     val role: UserRole,
     val grade: Int? = null,
+    val gradeLevel: Int? = grade,
     val createdAt: Date,
     val lastLoginAt: Date? = null,
     val isActive: Boolean = true,
     val parentId: String? = null,
-    val children: List<User> = emptyList() // For parent users
+    val children: List<User> = emptyList(), // For parent users
+    val profileImage: String? = null
 )

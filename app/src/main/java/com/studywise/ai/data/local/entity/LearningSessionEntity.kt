@@ -28,8 +28,10 @@ data class LearningSessionEntity(
     val completedAt: Date? = null,
     val durationMinutes: Int = 0,
     val questionsAnswered: Int = 0,
+    val correctAnswers: Int = 0,
     val pointsEarned: Int = 0,
-    val status: SessionStatus = SessionStatus.IN_PROGRESS
+    val status: SessionStatus = SessionStatus.IN_PROGRESS,
+    val syncStatus: SyncStatus = SyncStatus.PENDING
 )
 
 enum class SessionStatus {

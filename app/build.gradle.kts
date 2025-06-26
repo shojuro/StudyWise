@@ -23,6 +23,10 @@ android {
         // OpenAI API Key - Should be provided via local.properties or environment variable
         val openAiApiKey = project.findProperty("OPENAI_API_KEY")?.toString() ?: "YOUR_API_KEY_HERE"
         buildConfigField("String", "OPENAI_API_KEY", "\"$openAiApiKey\"")
+        
+        // Mistral API Key - Should be provided via local.properties or environment variable
+        val mistralApiKey = project.findProperty("MISTRAL_API_KEY")?.toString() ?: "YOUR_MISTRAL_API_KEY_HERE"
+        buildConfigField("String", "MISTRAL_API_KEY", "\"$mistralApiKey\"")
     }
 
     buildTypes {
@@ -92,6 +96,8 @@ dependencies {
     
     // WorkManager
     implementation(libs.work.runtime.ktx)
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    kapt("androidx.hilt:hilt-compiler:1.2.0")
     
     // DataStore
     implementation(libs.datastore.preferences)

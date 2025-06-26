@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.studywise.ai.presentation.components.SubjectCard
 import com.studywise.ai.presentation.theme.SubjectColors
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -149,8 +151,10 @@ fun StudentDashboardScreen(
                 items(uiState.subjects) { subject ->
                     SubjectCard(
                         subject = subject.subject,
-                        progress = subject.progress,
-                        lastPracticed = subject.lastPracticed,
+                        progress = subject.averageAccuracy,
+                        lastPracticed = subject.lastPracticed?.let { 
+                            SimpleDateFormat("MMM d", Locale.getDefault()).format(it)
+                        },
                         onClick = { onNavigateToSession(subject.subject) },
                         modifier = Modifier.fillMaxWidth(),
                         subjectColor = SubjectColors[subject.subject] ?: MaterialTheme.colorScheme.primary

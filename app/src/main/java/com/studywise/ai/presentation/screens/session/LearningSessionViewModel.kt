@@ -9,9 +9,11 @@ import com.studywise.ai.data.local.entity.ProgressEntity
 import com.studywise.ai.data.local.entity.LearningSessionEntity
 import com.studywise.ai.data.local.entity.SessionStatus
 import com.studywise.ai.data.local.preferences.PreferencesManager
+import com.studywise.ai.domain.model.AnalyticsEvent
 import com.studywise.ai.domain.model.Question
 import com.studywise.ai.domain.model.QuestionDifficulty
 import com.studywise.ai.domain.repository.QuestionRepository
+import com.studywise.ai.domain.service.AnalyticsService
 import com.studywise.ai.util.textextraction.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -51,7 +53,8 @@ class LearningSessionViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager,
     private val photoTextExtractor: PhotoTextExtractor,
     private val documentTextExtractor: DocumentTextExtractor,
-    private val voiceTextCapture: VoiceTextCapture
+    private val voiceTextCapture: VoiceTextCapture,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LearningSessionUiState())
@@ -193,6 +196,14 @@ class LearningSessionViewModel @Inject constructor(
 
     private fun startSession() {
         viewModelScope.launch {
+            // Log analytics event
+            analyticsService.logEvent(
+                AnalyticsEvent.SessionStarted(
+                    subject = subject,
+                    userId = userId
+                )
+            )
+            
             // Create session entity
             val session = LearningSessionEntity(
                 id = currentSessionId,
@@ -266,6 +277,7 @@ class LearningSessionViewModel @Inject constructor(
     fun submitAnswer() {
         if (_uiState.value.userAnswer.isBlank()) return
 
+        val startTime = System.currentTimeMillis()
         _uiState.value = _uiState.value.copy(isAnswerSubmitted = true)
 
         viewModelScope.launch {
@@ -275,6 +287,16 @@ class LearningSessionViewModel @Inject constructor(
             val isCorrect = evaluateAnswer(
                 question = question,
                 userAnswer = _uiState.value.userAnswer
+            )
+            
+            // Log analytics event
+            analyticsService.logEvent(
+                AnalyticsEvent.QuestionAnswered(
+                    subject = subject,
+                    skillId = question.skillId ?: "unknown",
+                    isCorrect = isCorrect,
+                    responseTime = System.currentTimeMillis() - startTime
+                )
             )
 
             val pointsEarned = when {
@@ -337,7 +359,24 @@ class LearningSessionViewModel @Inject constructor(
         viewModelScope.launch {
             val startTime = learningSessionDao.getSessionById(currentSessionId)?.startedAt ?: Date()
             val endTime = Date()
-            val durationMinutes = ((endTime.time - startTime.time) / 1000 / 60).toInt()
+            val durationSeconds = ((endTime.time - startTime.time) / 1000).toLong()
+            val durationMinutes = (durationSeconds / 60).toInt()
+            
+            // Calculate mastery score
+            val masteryScore = if (_uiState.value.questionsCompleted > 0) {
+                _uiState.value.pointsEarned.toFloat() / (_uiState.value.questionsCompleted * 10f)
+            } else 0f
+            
+            // Log analytics event
+            analyticsService.logEvent(
+                AnalyticsEvent.SessionCompleted(
+                    subject = subject,
+                    userId = userId,
+                    duration = durationSeconds,
+                    questionsAnswered = _uiState.value.questionsCompleted,
+                    masteryScore = masteryScore
+                )
+            )
 
             // Update session as completed
             learningSessionDao.completeSession(

@@ -54,4 +54,22 @@ interface LearningSessionDao {
 
     @Query("SELECT SUM(pointsEarned) FROM learning_sessions WHERE userId = :userId")
     suspend fun getTotalPointsEarned(userId: String): Int?
+    
+    @Query("SELECT * FROM learning_sessions WHERE userId = :userId ORDER BY startedAt DESC")
+    suspend fun getAllSessions(userId: String): List<LearningSessionEntity>
+    
+    @Query("SELECT * FROM learning_sessions WHERE userId = :userId AND subject = :subject ORDER BY startedAt DESC")
+    suspend fun getSessionsBySubject(userId: String, subject: String): List<LearningSessionEntity>
+    
+    @Query("SELECT * FROM learning_sessions WHERE userId = :userId AND startedAt >= :startDate AND startedAt <= :endDate ORDER BY startedAt DESC")
+    suspend fun getSessionsBetweenDates(userId: String, startDate: Date, endDate: Date): List<LearningSessionEntity>
+    
+    @Query("SELECT * FROM learning_sessions WHERE userId = :userId AND startedAt >= :date ORDER BY startedAt DESC")
+    suspend fun getSessionsAfterDate(userId: String, date: Date): List<LearningSessionEntity>
+    
+    @Query("SELECT DISTINCT subject FROM learning_sessions WHERE userId = :userId")
+    suspend fun getAllSubjects(userId: String): List<String>
+    
+    @Query("SELECT * FROM learning_sessions WHERE userId = :userId AND syncStatus = 'PENDING'")
+    suspend fun getPendingSyncSessions(userId: String): List<LearningSessionEntity>
 }

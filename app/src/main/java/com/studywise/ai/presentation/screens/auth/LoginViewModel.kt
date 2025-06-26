@@ -1,9 +1,13 @@
 package com.studywise.ai.presentation.screens.auth
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.studywise.ai.StudyWiseApp
 import com.studywise.ai.data.local.entity.UserRole
+import com.studywise.ai.domain.model.AnalyticsEvent
 import com.studywise.ai.domain.repository.AuthRepository
+import com.studywise.ai.domain.service.AnalyticsService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +17,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val analyticsService: AnalyticsService,
+    private val application: Application
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -39,19 +45,19 @@ class LoginViewModel @Inject constructor(
 
         // Validate inputs
         var hasError = false
+        
+        // Validate email
         if (email.isEmpty()) {
             _uiState.value = _uiState.value.copy(emailError = "Email is required")
             hasError = true
-        } else if (!isValidEmail(email)) {
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             _uiState.value = _uiState.value.copy(emailError = "Invalid email format")
             hasError = true
         }
 
+        // Basic password presence check (not full validation for login)
         if (password.isEmpty()) {
             _uiState.value = _uiState.value.copy(passwordError = "Password is required")
-            hasError = true
-        } else if (password.length < 6) {
-            _uiState.value = _uiState.value.copy(passwordError = "Password must be at least 6 characters")
             hasError = true
         }
 
@@ -62,6 +68,19 @@ class LoginViewModel @Inject constructor(
 
             authRepository.login(email, password)
                 .onSuccess { user ->
+                    // Log successful login
+                    analyticsService.logEvent(
+                        AnalyticsEvent.FeatureUsed(
+                            featureName = "login_success",
+                            userId = user.id
+                        )
+                    )
+                    analyticsService.setUserId(user.id)
+                    analyticsService.setUserProperty("user_role", user.role.name)
+                    
+                    // Start data sync after successful login
+                    (application as StudyWiseApp).startDataSync()
+                    
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         loginSuccess = true,
@@ -69,6 +88,15 @@ class LoginViewModel @Inject constructor(
                     )
                 }
                 .onFailure { exception ->
+                    // Log login failure
+                    analyticsService.logEvent(
+                        AnalyticsEvent.ErrorOccurred(
+                            errorType = "login_failed",
+                            errorMessage = exception.message ?: "Unknown error",
+                            screen = "login"
+                        )
+                    )
+                    
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         generalError = exception.message ?: "Login failed"
@@ -77,9 +105,6 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private fun isValidEmail(email: String): Boolean {
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
 }
 
 data class LoginUiState(

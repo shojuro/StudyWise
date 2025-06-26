@@ -33,7 +33,10 @@ data class PhotoLearningUiState(
     val error: String? = null,
     val showGradeSelector: Boolean = false,
     val lessonStarted: Boolean = false,
-    val lessonComplete: Boolean = false
+    val lessonComplete: Boolean = false,
+    val showManualEntry: Boolean = false,
+    val manualObjectName: String = "",
+    val detectionConfidence: Float? = null
 )
 
 data class ConversationEntry(
@@ -100,10 +103,20 @@ class PhotoLearningViewModel @Inject constructor(
                     generateGradedSentences(identifiedObject.name)
                 },
                 onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isAnalyzing = false,
-                        error = "Failed to identify object: ${error.message}"
-                    )
+                    // Check if it's a low confidence error
+                    if (error.message?.contains("confidence") == true) {
+                        _uiState.value = _uiState.value.copy(
+                            isAnalyzing = false,
+                            error = error.message,
+                            showManualEntry = true
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isAnalyzing = false,
+                            error = "Failed to identify object: ${error.message}",
+                            showManualEntry = true
+                        )
+                    }
                 }
             )
         }
@@ -322,6 +335,96 @@ class PhotoLearningViewModel @Inject constructor(
         _uiState.value = PhotoLearningUiState(currentGrade = _uiState.value.currentGrade)
         mediaPlayer?.release()
         audioRecorder.release()
+    }
+    
+    fun onManualObjectNameChange(name: String) {
+        _uiState.value = _uiState.value.copy(manualObjectName = name)
+    }
+    
+    fun submitManualObject() {
+        val objectName = _uiState.value.manualObjectName.trim()
+        if (objectName.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                error = "Please enter an object name"
+            )
+            return
+        }
+        
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isAnalyzing = true,
+                showManualEntry = false,
+                error = null
+            )
+            
+            // For manual entry, we'll create a temporary object and then generate proper content
+            val tempObject = IdentifiedObject(
+                name = objectName,
+                description = "Generating educational content...",
+                category = "Manual Entry",
+                confidence = 1.0f,
+                educationalValue = "Loading..."
+            )
+            
+            _uiState.value = _uiState.value.copy(
+                identifiedObject = tempObject,
+                isAnalyzing = true
+            )
+            
+            // Generate proper educational content using AI
+            generateEducationalContentForManualObject(objectName)
+        }
+    }
+    
+    private fun generateEducationalContentForManualObject(objectName: String) {
+        viewModelScope.launch {
+            // Use AI to generate proper educational content for the manual object
+            aiRepository.generateContentForManualObject(objectName).fold(
+                onSuccess = { identifiedObject ->
+                    _uiState.value = _uiState.value.copy(
+                        identifiedObject = identifiedObject,
+                        isAnalyzing = false
+                    )
+                    
+                    // Log analytics event
+                    analyticsService.logEvent(
+                        AnalyticsEvent.PhotoAnalyzed(
+                            objectName = identifiedObject.name,
+                            confidence = identifiedObject.confidence
+                        )
+                    )
+                    
+                    generateGradedSentences(identifiedObject.name)
+                },
+                onFailure = { error ->
+                    // If AI fails, use a basic fallback
+                    val article = if (objectName.first().lowercaseChar() in listOf('a', 'e', 'i', 'o', 'u')) "an" else "a"
+                    val fallbackObject = IdentifiedObject(
+                        name = objectName,
+                        description = "This is $article $objectName.",
+                        category = "Manual Entry",
+                        confidence = 1.0f,
+                        educationalValue = "Learning about ${objectName}s helps us understand our world!"
+                    )
+                    
+                    _uiState.value = _uiState.value.copy(
+                        identifiedObject = fallbackObject,
+                        isAnalyzing = false,
+                        error = "Could not generate AI content: ${error.message}"
+                    )
+                    
+                    generateGradedSentences(objectName)
+                }
+            )
+        }
+    }
+    
+    fun dismissManualEntry() {
+        _uiState.value = _uiState.value.copy(
+            showManualEntry = false,
+            manualObjectName = "",
+            error = null
+        )
     }
     
     override fun onCleared() {

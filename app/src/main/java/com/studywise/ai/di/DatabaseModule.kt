@@ -64,4 +64,10 @@ object DatabaseModule {
     fun provideSessionQuestionDao(database: StudyWiseDatabase): SessionQuestionDao {
         return database.sessionQuestionDao()
     }
+    
+    @Provides
+    @Singleton
+    fun provideQuestionResponseDao(database: StudyWiseDatabase): QuestionResponseDao {
+        return database.questionResponseDao()
+    }
 }

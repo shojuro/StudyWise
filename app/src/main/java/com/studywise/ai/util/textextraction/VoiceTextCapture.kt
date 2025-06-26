@@ -10,12 +10,13 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import java.util.Locale
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class VoiceTextCapture @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     
     private var speechRecognizer: SpeechRecognizer? = null

@@ -1,18 +1,26 @@
 package com.studywise.ai
 
 import android.app.Application
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import com.studywise.ai.data.local.DatabaseInitializer
+import com.studywise.ai.data.sync.SyncManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import timber.log.Timber.DebugTree
 import javax.inject.Inject
 
 @HiltAndroidApp
-class StudyWiseApplication : Application() {
+class StudyWiseApp : Application(), Configuration.Provider {
+    
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+    
+    @Inject
+    lateinit var syncManager: SyncManager
     
     @Inject
     lateinit var databaseInitializer: DatabaseInitializer
@@ -22,8 +30,10 @@ class StudyWiseApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        // For now, always plant debug tree. In production, use a crash reporting tree
-        Timber.plant(DebugTree())
+        // Initialize Timber for logging
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
         
         // Initialize database with skills and questions
         applicationScope.launch {
@@ -34,5 +44,21 @@ class StudyWiseApplication : Application() {
                 Timber.e(e, "Failed to initialize database")
             }
         }
+        
+        // Start periodic sync if user is logged in
+        // This will be called from login/registration success
+    }
+    
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
+    
+    fun startDataSync() {
+        syncManager.startPeriodicSync()
+    }
+    
+    fun stopDataSync() {
+        syncManager.stopPeriodicSync()
     }
 }

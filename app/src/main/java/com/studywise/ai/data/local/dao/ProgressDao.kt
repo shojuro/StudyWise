@@ -48,4 +48,13 @@ interface ProgressDao {
 
     @Query("UPDATE progress SET streakDays = 0 WHERE userId = :userId")
     suspend fun resetAllStreaks(userId: String)
+    
+    @Query("SELECT * FROM progress WHERE userId = :userId AND subject = :subject")
+    suspend fun getProgressBySubject(userId: String, subject: String): List<ProgressEntity>
+    
+    @Query("SELECT * FROM progress WHERE userId = :userId AND skillId = :skillId")
+    suspend fun getProgressBySkill(userId: String, skillId: String): List<ProgressEntity>
+    
+    @Query("SELECT * FROM progress WHERE userId = :userId AND syncStatus = 'PENDING'")
+    suspend fun getPendingSyncProgress(userId: String): List<ProgressEntity>
 }

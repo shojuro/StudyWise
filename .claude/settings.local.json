@@ -12,7 +12,16 @@
       "Bash(find:*)",
       "Bash(./build.sh)",
       "Bash(./build_wrapper.ps1)",
-      "Bash(cmd.exe /c \"set JAVA_HOME=C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.15.6-hotspot && gradlew.bat assembleDebug\")"
+      "Bash(cmd.exe /c \"set JAVA_HOME=C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.15.6-hotspot && gradlew.bat assembleDebug\")",
+      "Bash(./run-tests.bat)",
+      "Bash(./build-apk.bat)",
+      "Bash(cmd.exe /c \"build-apk.bat\")",
+      "Bash(mv:*)",
+      "Bash(java:*)",
+      "Bash(touch:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(powershell.exe:*)",
+      "Bash($env:JAVA_HOME = \"C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.15.6-hotspot\")"
     ],
     "deny": []
   }

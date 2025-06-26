@@ -3,7 +3,9 @@ package com.studywise.ai.di
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.studywise.ai.BuildConfig
+import com.studywise.ai.data.remote.api.MistralApiService
 import com.studywise.ai.data.remote.api.OpenAIService
+import com.studywise.ai.data.remote.api.StudyWiseApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -71,4 +73,47 @@ object NetworkModule {
         // In production, use secure storage or environment variables
         return BuildConfig.OPENAI_API_KEY
     }
+    
+    @Provides
+    @Singleton
+    @Named("MistralRetrofit")
+    fun provideMistralRetrofit(
+        okHttpClient: OkHttpClient,
+        gson: Gson
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl("https://api.mistral.ai/")
+        .client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .build()
+    
+    @Provides
+    @Singleton
+    fun provideMistralApiService(
+        @Named("MistralRetrofit") retrofit: Retrofit
+    ): MistralApiService = retrofit.create(MistralApiService::class.java)
+    
+    @Provides
+    @Singleton
+    @Named("MistralApiKey")
+    fun provideMistralApiKey(): String {
+        return BuildConfig.MISTRAL_API_KEY
+    }
+    
+    @Provides
+    @Singleton
+    @Named("StudyWiseRetrofit")
+    fun provideStudyWiseRetrofit(
+        okHttpClient: OkHttpClient,
+        gson: Gson
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl("https://api.studywise.ai/") // Replace with actual backend URL
+        .client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .build()
+    
+    @Provides
+    @Singleton
+    fun provideStudyWiseApiService(
+        @Named("StudyWiseRetrofit") retrofit: Retrofit
+    ): StudyWiseApiService = retrofit.create(StudyWiseApiService::class.java)
 }
