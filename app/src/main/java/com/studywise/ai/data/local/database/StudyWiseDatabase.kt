@@ -17,9 +17,20 @@ import com.studywise.ai.data.local.entity.*
         QuestionResponseEntity::class,
         SkillProgressionEntity::class,
         ContentTemplateEntity::class,
-        StudentSkillMasteryEntity::class
+        StudentSkillMasteryEntity::class,
+        // Verbal Journal entities
+        VerbalJournalEntryEntity::class,
+        ConversationTurnEntity::class,
+        SpeechErrorEntity::class,
+        SessionAnalysisEntity::class,
+        VerbalJournalProfileEntity::class,
+        ImprovementAreaEntity::class,
+        SessionRecommendationEntity::class,
+        DailyJournalPromptEntity::class,
+        VerbalJournalAchievementEntity::class,
+        SpeechProgressSnapshotEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -34,6 +45,7 @@ abstract class StudyWiseDatabase : RoomDatabase() {
     abstract fun skillProgressionDao(): SkillProgressionDao
     abstract fun contentTemplateDao(): ContentTemplateDao
     abstract fun studentSkillMasteryDao(): StudentSkillMasteryDao
+    abstract fun verbalJournalDao(): VerbalJournalDao
     
     companion object {
         const val DATABASE_NAME = "studywise_database"
