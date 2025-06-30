@@ -10,6 +10,13 @@ import com.studywise.ai.domain.service.trackProgressExported
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonArray
+import java.io.File
+import java.io.FileWriter
+import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
@@ -165,17 +172,182 @@ class SubjectProgressDetailViewModel @Inject constructor(
     }
 
     private suspend fun exportAsPdf() {
-        // TODO: Implement PDF export
-        // This would generate a PDF with charts, stats, and recommendations
+        val currentState = _uiState.value
+        val subjectProgress = currentState.subjectProgress ?: return
+        
+        // Create PDF content as HTML (which can be converted to PDF)
+        val htmlContent = generateProgressHtml(subjectProgress, currentState.sessionHistory, currentState.recommendations)
+        
+        // In a full implementation, you would use a PDF library like iText or similar
+        // For now, we'll save as HTML which can be opened in browser and printed to PDF
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
+        val fileName = "progress_${subjectProgress.subject}_${dateFormatter.format(Date())}.html"
+        
+        try {
+            // Save to app's external files directory
+            val file = File("/sdcard/Download", fileName)
+            FileWriter(file).use { writer ->
+                writer.write(htmlContent)
+            }
+            
+            // In a real app, you would also notify the user and possibly open the file
+            println("Progress exported to: ${file.absolutePath}")
+        } catch (e: Exception) {
+            println("Export failed: ${e.message}")
+        }
     }
 
     private suspend fun exportAsCsv() {
-        // TODO: Implement CSV export
-        // This would export session data in CSV format
+        val currentState = _uiState.value
+        val sessionHistory = currentState.sessionHistory
+        
+        val csvContent = buildString {
+            // CSV Header
+            appendLine("Date,Accuracy,Minutes Spent,Points Earned,Questions Answered")
+            
+            // CSV Data
+            sessionHistory.forEach { session ->
+                val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                appendLine("${dateFormatter.format(session.date)},${session.accuracy},${session.minutesSpent},${session.pointsEarned},${session.questionsAnswered}")
+            }
+        }
+        
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
+        val fileName = "sessions_${dateFormatter.format(Date())}.csv"
+        
+        try {
+            val file = File("/sdcard/Download", fileName)
+            FileWriter(file).use { writer ->
+                writer.write(csvContent)
+            }
+            println("CSV exported to: ${file.absolutePath}")
+        } catch (e: Exception) {
+            println("Export failed: ${e.message}")
+        }
     }
 
     private suspend fun exportAsJson() {
-        // TODO: Implement JSON export
-        // This would export all progress data in JSON format
+        val currentState = _uiState.value
+        val subjectProgress = currentState.subjectProgress ?: return
+        
+        val jsonContent = JsonObject(mapOf(
+            "subject" to JsonPrimitive(subjectProgress.subject),
+            "totalSessions" to JsonPrimitive(subjectProgress.totalSessions),
+            "totalQuestions" to JsonPrimitive(subjectProgress.totalQuestions),
+            "correctAnswers" to JsonPrimitive(subjectProgress.correctAnswers),
+            "averageAccuracy" to JsonPrimitive(subjectProgress.averageAccuracy),
+            "totalTimeMinutes" to JsonPrimitive(subjectProgress.totalTimeMinutes),
+            "lastPracticed" to JsonPrimitive(subjectProgress.lastPracticed?.toString() ?: "null"),
+            "skillMastery" to JsonObject(
+                subjectProgress.skillMastery.mapValues { JsonPrimitive(it.value) }
+            ),
+            "sessionHistory" to JsonArray(
+                currentState.sessionHistory.map { session ->
+                    JsonObject(mapOf(
+                        "date" to JsonPrimitive(session.date.toString()),
+                        "accuracy" to JsonPrimitive(session.accuracy),
+                        "minutesSpent" to JsonPrimitive(session.minutesSpent),
+                        "pointsEarned" to JsonPrimitive(session.pointsEarned),
+                        "questionsAnswered" to JsonPrimitive(session.questionsAnswered)
+                    ))
+                }
+            ),
+            "recommendations" to JsonArray(
+                currentState.recommendations.map { JsonPrimitive(it) }
+            )
+        ))
+        
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
+        val fileName = "progress_${subjectProgress.subject}_${dateFormatter.format(Date())}.json"
+        
+        try {
+            val file = File("/sdcard/Download", fileName)
+            FileWriter(file).use { writer ->
+                writer.write(jsonContent.toString())
+            }
+            println("JSON exported to: ${file.absolutePath}")
+        } catch (e: Exception) {
+            println("Export failed: ${e.message}")
+        }
     }
+    
+    private fun generateProgressHtml(
+        progress: SubjectProgress,
+        sessions: List<LearningSession>,
+        recommendations: List<String>
+    ): String = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${progress.subject} Progress Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+                .stat { text-align: center; }
+                .stat-value { font-size: 24px; font-weight: bold; color: #2196F3; }
+                .section { margin: 30px 0; }
+                .section h2 { color: #333; border-bottom: 2px solid #2196F3; padding-bottom: 5px; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                th { background-color: #f5f5f5; }
+                .recommendation { background-color: #e8f5e8; padding: 10px; margin: 5px 0; border-radius: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>${progress.subject} Progress Report</h1>
+                <p>Generated on ${SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(Date())}</p>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">${progress.totalSessions}</div>
+                    <div>Total Sessions</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${progress.totalQuestions}</div>
+                    <div>Questions</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${(progress.averageAccuracy * 100).toInt()}%</div>
+                    <div>Accuracy</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${progress.totalTimeMinutes}</div>
+                    <div>Minutes</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Session History</h2>
+                <table>
+                    <tr>
+                        <th>Date</th>
+                        <th>Accuracy</th>
+                        <th>Minutes</th>
+                        <th>Points</th>
+                        <th>Questions</th>
+                    </tr>
+                    ${sessions.joinToString("") { session ->
+                        """<tr>
+                            <td>${SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(session.date)}</td>
+                            <td>${(session.accuracy * 100).toInt()}%</td>
+                            <td>${session.minutesSpent}</td>
+                            <td>${session.pointsEarned}</td>
+                            <td>${session.questionsAnswered}</td>
+                        </tr>"""
+                    }}
+                </table>
+            </div>
+            
+            <div class="section">
+                <h2>Recommendations</h2>
+                ${recommendations.joinToString("") { recommendation ->
+                    """<div class="recommendation">$recommendation</div>"""
+                }}
+            </div>
+        </body>
+        </html>
+    """.trimIndent()
 }

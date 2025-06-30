@@ -67,7 +67,7 @@ fun EnhancedLearningSessionScreen(
                 uiState.error != null -> {
                     ErrorContent(
                         error = uiState.error,
-                        onRetry = { /* TODO: Implement retry */ }
+                        onRetry = { viewModel.retrySession() }
                     )
                 }
                 uiState.isSessionComplete -> {
@@ -764,7 +764,7 @@ private fun EnhancedSessionCompleteContent(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     LinearProgressIndicator(
-                        progress = { 0.7f }, // TODO: Get actual mastery level
+                        progress = { skill.masteryLevel },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)
@@ -772,7 +772,7 @@ private fun EnhancedSessionCompleteContent(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "70% Mastery",
+                        text = "${(skill.masteryLevel * 100).toInt()}% Mastery",
                         style = MaterialTheme.typography.labelSmall
                     )
                 }

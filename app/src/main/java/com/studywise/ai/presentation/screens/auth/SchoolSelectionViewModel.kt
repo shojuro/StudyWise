@@ -3,6 +3,8 @@ package com.studywise.ai.presentation.screens.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.studywise.ai.domain.repository.SchoolRepository
+import com.studywise.ai.domain.repository.UserRepository
+import com.studywise.ai.data.local.preferences.PreferencesManager
 import com.studywise.ai.domain.model.School
 import com.studywise.ai.domain.model.SchoolType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +27,9 @@ data class SchoolSelectionUiState(
 
 @HiltViewModel
 class SchoolSelectionViewModel @Inject constructor(
-    private val schoolRepository: SchoolRepository
+    private val schoolRepository: SchoolRepository,
+    private val userRepository: UserRepository,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SchoolSelectionUiState())
@@ -161,10 +165,22 @@ class SchoolSelectionViewModel @Inject constructor(
     }
 
     fun confirmSelection() {
-        // Save selected school to preferences or user profile
+        // Save selected school to preferences
         viewModelScope.launch {
             _uiState.value.selectedSchool?.let { school ->
-                // TODO: Save to user profile
+                try {
+                    // Save school ID to preferences
+                    preferencesManager.updateSchoolId(school.id)
+                    
+                    // In a full implementation, we might also:
+                    // 1. Update user profile with school information
+                    // 2. Load school-specific content or settings
+                    // 3. Notify analytics about school selection
+                    
+                } catch (e: Exception) {
+                    // Handle error - in a real app you'd show an error message
+                    println("Failed to save school selection: ${e.message}")
+                }
             }
         }
     }

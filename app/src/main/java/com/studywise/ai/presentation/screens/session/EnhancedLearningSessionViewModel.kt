@@ -270,13 +270,15 @@ class EnhancedLearningSessionViewModel @Inject constructor(
             generateQuestionsFromTemplates(selectedSkill)
         } else {
             sessionQuestions = questions.toMutableList()
+            val masteryLevel = skillProgressionManager.getSkillMasteryLevel(userId, selectedSkill.id)
             _uiState.value = _uiState.value.copy(
                 totalQuestions = sessionQuestions.size,
                 currentSkill = SkillInfo(
                     id = selectedSkill.id,
                     name = selectedSkill.name,
                     description = selectedSkill.description,
-                    category = selectedSkill.category.name
+                    category = selectedSkill.category.name,
+                    masteryLevel = masteryLevel
                 ),
                 sessionType = sessionType.name,
                 isLoading = false
@@ -295,13 +297,15 @@ class EnhancedLearningSessionViewModel @Inject constructor(
         
         if (generatedQuestions.isNotEmpty()) {
             sessionQuestions = generatedQuestions.toMutableList()
+            val masteryLevel = skillProgressionManager.getSkillMasteryLevel(userId, skill.id)
             _uiState.value = _uiState.value.copy(
                 totalQuestions = sessionQuestions.size,
                 currentSkill = SkillInfo(
                     id = skill.id,
                     name = skill.name,
                     description = skill.description,
-                    category = skill.category.name
+                    category = skill.category.name,
+                    masteryLevel = masteryLevel
                 ),
                 isLoading = false
             )
@@ -603,6 +607,34 @@ class EnhancedLearningSessionViewModel @Inject constructor(
             error = "Unable to generate questions at this time. Please try again."
         )
     }
+    
+    fun retrySession() {
+        // Clear error state
+        _uiState.value = _uiState.value.copy(error = null)
+        
+        // Retry based on current state
+        when {
+            _uiState.value.waitingForBookText -> {
+                // Reset to book text input state
+                _uiState.value = EnhancedLearningSessionUiState(
+                    subject = subject,
+                    waitingForBookText = true
+                )
+            }
+            _uiState.value.currentQuestion == null -> {
+                // Try to load questions again
+                startSession()
+            }
+            else -> {
+                // Clear any error and continue with current question
+                _uiState.value = _uiState.value.copy(
+                    error = null,
+                    isEvaluating = false,
+                    isLoading = false
+                )
+            }
+        }
+    }
 }
 
 // Enhanced UI State
@@ -653,7 +685,8 @@ data class SkillInfo(
     val id: Long,
     val name: String,
     val description: String,
-    val category: String
+    val category: String,
+    val masteryLevel: Float = 0f
 )
 
 data class AnswerEvaluation(

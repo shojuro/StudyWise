@@ -1,19 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
+   StudyWise data extraction rules for backup and device transfer.
+   Protects sensitive data while allowing appropriate user content to be backed up.
    See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- Include educational content and progress data -->
+        <include domain="database" path="studywise.db"/>
+        <include domain="sharedpref" path="user_preferences.xml"/>
+        <include domain="sharedpref" path="learning_preferences.xml"/>
+        <include domain="file" path="exported_progress/"/>
+        <include domain="file" path="offline_content/"/>
+        
+        <!-- Exclude sensitive authentication and security data -->
+        <exclude domain="sharedpref" path="secure_preferences.xml"/>
+        <exclude domain="database" path="session_tokens.db"/>
+        <exclude domain="file" path="cache/"/>
+        <exclude domain="file" path="temp/"/>
+        <exclude domain="file" path="logs/"/>
+        
+        <!-- Exclude any files containing passwords or tokens -->
+        <exclude domain="file" path="**/password*"/>
+        <exclude domain="file" path="**/token*"/>
+        <exclude domain="file" path="**/key*"/>
+        <exclude domain="file" path="**/auth*"/>
+        
+        <!-- Exclude temporary educational content files -->
+        <exclude domain="file" path="**/temp_*"/>
+        <exclude domain="file" path="**/*.tmp"/>
+        <exclude domain="file" path="**/cache_*"/>
     </cloud-backup>
-    <!--
+    
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <!-- More permissive for device transfer as it's local -->
+        <include domain="database" path="studywise.db"/>
+        <include domain="sharedpref" path="user_preferences.xml"/>
+        <include domain="sharedpref" path="learning_preferences.xml"/>
+        <include domain="file" path="exported_progress/"/>
+        <include domain="file" path="offline_content/"/>
+        <include domain="file" path="student_work/"/>
+        
+        <!-- Still exclude sensitive authentication data on device transfer -->
+        <exclude domain="sharedpref" path="secure_preferences.xml"/>
+        <exclude domain="database" path="session_tokens.db"/>
+        <exclude domain="file" path="**/password*"/>
+        <exclude domain="file" path="**/token*"/>
+        <exclude domain="file" path="**/auth*"/>
+        
+        <!-- Exclude temporary and cache files -->
+        <exclude domain="file" path="cache/"/>
+        <exclude domain="file" path="temp/"/>
+        <exclude domain="file" path="logs/"/>
+        <exclude domain="file" path="**/temp_*"/>
+        <exclude domain="file" path="**/*.tmp"/>
     </device-transfer>
-    -->
 </data-extraction-rules>

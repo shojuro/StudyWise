@@ -112,13 +112,48 @@ class ProfileSetupViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            // TODO: Save profile data to repository
-            // This would include:
-            // - Uploading profile image to storage
-            // - Updating user profile in database
-            // - Saving notification preferences
-
-            _uiState.value = _uiState.value.copy(isLoading = false)
+            try {
+                val currentState = _uiState.value
+                
+                // Get current user to update
+                val currentUser = userRepository.getCurrentUser().getOrNull()
+                if (currentUser == null) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        displayNameError = "Unable to load user profile"
+                    )
+                    return@launch
+                }
+                
+                // Upload profile image if selected
+                val profileImageUrl = currentState.profileImageUri?.let { uri ->
+                    userRepository.uploadProfileImage(uri).getOrNull()
+                }
+                
+                // Update user profile with basic available data
+                val updatedUser = currentUser.copy(
+                    name = currentState.displayName
+                    // Note: Extended profile fields (bio, profileImageUrl, etc.) would require 
+                    // a separate UserProfileEntity table in a full implementation
+                )
+                
+                // Save profile to database
+                userRepository.updateUserProfile(updatedUser).getOrThrow()
+                
+                // Save notification preferences
+                userRepository.updateNotificationPreferences(
+                    enableDailyReminders = currentState.enableDailyReminders,
+                    enableProgressUpdates = currentState.enableProgressUpdates
+                ).getOrThrow()
+                
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    displayNameError = "Failed to save profile: ${e.message}"
+                )
+            }
         }
     }
 }

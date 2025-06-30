@@ -150,6 +150,23 @@ class SkillProgressionManager @Inject constructor(
     }
     
     /**
+     * Get student's mastery level for a specific skill
+     */
+    suspend fun getSkillMasteryLevel(
+        studentId: String,
+        skillId: Long
+    ): Float {
+        return try {
+            val mastery = educationalContentRepository
+                .getStudentMastery(studentId, skillId)
+                .getOrNull()
+            mastery?.masteryLevel ?: 0f
+        } catch (e: Exception) {
+            0f
+        }
+    }
+    
+    /**
      * Update student's skill mastery after practice
      */
     suspend fun updateSkillMastery(

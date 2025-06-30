@@ -383,16 +383,230 @@ class PromptExpansionService @Inject constructor(
         }
     
     /**
-     * Generate variations using AI assistance (placeholder for future implementation)
+     * Generate variations using AI-inspired structured generation
+     * This uses educational best practices to create meaningful variations
      */
     suspend fun generateAIVariations(
         skill: SkillEntity,
         gradeLevel: Int,
         count: Int
-    ): Result<List<ContentTemplateEntity>> {
-        // TODO: Implement AI-based generation
-        // This would connect to GPT or similar service
-        return Result.success(emptyList())
+    ): Result<List<ContentTemplateEntity>> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val basePrompts = getSkillBasePrompts(skill)
+            val variations = mutableListOf<ContentTemplateEntity>()
+            
+            repeat(count) { index ->
+                val basePrompt = basePrompts.random()
+                val variation = generateEducationalVariation(
+                    basePrompt = basePrompt,
+                    skill = skill,
+                    gradeLevel = gradeLevel,
+                    variationIndex = index,
+                    totalCount = count
+                )
+                variations.add(variation)
+            }
+            
+            Result.success(variations)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * Generate an educationally sound variation of a prompt
+     */
+    private fun generateEducationalVariation(
+        basePrompt: String,
+        skill: SkillEntity,
+        gradeLevel: Int,
+        variationIndex: Int,
+        totalCount: Int
+    ): ContentTemplateEntity {
+        val variationStrategies = listOf(
+            "perspective_change",
+            "complexity_adjustment",
+            "context_variation",
+            "question_type_shift",
+            "metacognitive_focus",
+            "scaffolding_variation"
+        )
+        
+        val strategy = variationStrategies[variationIndex % variationStrategies.size]
+        val adjustedPrompt = applyVariationStrategy(basePrompt, strategy, gradeLevel)
+        
+        return ContentTemplateEntity(
+            id = 0, // Will be auto-generated
+            skillId = skill.id,
+            title = "${skill.name} - ${strategy.replace("_", " ").uppercase()} #${variationIndex + 1}",
+            content = adjustedPrompt,
+            difficulty = calculateDifficultyForVariation(strategy, gradeLevel),
+            gradeLevel = gradeLevel,
+            templateType = mapStrategyToTemplateType(strategy),
+            variables = extractVariablesFromPrompt(adjustedPrompt),
+            constraints = generateConstraintsForStrategy(strategy, gradeLevel),
+            metadata = generateVariationMetadata(strategy, skill, gradeLevel)
+        )
+    }
+    
+    /**
+     * Apply educational variation strategies to create meaningful prompt differences
+     */
+    private fun applyVariationStrategy(basePrompt: String, strategy: String, gradeLevel: Int): String {
+        return when (strategy) {
+            "perspective_change" -> {
+                // Change the viewpoint or perspective in the question
+                basePrompt.replace("What do you think", "From the character's perspective, what might")
+                    .replace("How does", "If you were in this situation, how would")
+                    .replace("Why might", "What reasons could explain why")
+            }
+            "complexity_adjustment" -> {
+                // Adjust cognitive complexity appropriately for grade
+                if (gradeLevel <= 6) {
+                    basePrompt.replace("analyze", "look at")
+                        .replace("evaluate", "decide if")
+                        .replace("synthesize", "put together")
+                } else {
+                    basePrompt.replace("look at", "analyze carefully")
+                        .replace("decide", "evaluate")
+                        .replace("put together", "synthesize")
+                }
+            }
+            "context_variation" -> {
+                // Change the context while maintaining the skill focus
+                val contexts = listOf("in your story", "in the text you're reading", "in this passage", "in the book")
+                val currentContext = contexts.find { basePrompt.contains(it) }
+                val newContext = contexts.filter { it != currentContext }.random()
+                basePrompt.replace(currentContext ?: "in your text", newContext)
+            }
+            "question_type_shift" -> {
+                // Shift between different question types (what, how, why, when)
+                when {
+                    basePrompt.startsWith("What") -> basePrompt.replace("What", "How")
+                    basePrompt.startsWith("How") -> basePrompt.replace("How", "Why")
+                    basePrompt.startsWith("Why") -> basePrompt.replace("Why", "What")
+                    else -> "What details in your text help you understand $basePrompt"
+                }
+            }
+            "metacognitive_focus" -> {
+                // Add metacognitive elements (thinking about thinking)
+                "Before answering, think about your reading strategy. Then: $basePrompt What thinking steps did you use?"
+            }
+            "scaffolding_variation" -> {
+                // Provide different levels of support
+                if (gradeLevel <= 5) {
+                    "First, read your text carefully. Then: $basePrompt (Hint: Look for specific words or phrases that give you clues.)"
+                } else {
+                    "$basePrompt Support your answer with specific evidence from the text."
+                }
+            }
+            else -> basePrompt
+        }
+    }
+    
+    /**
+     * Get base educational prompts for a skill
+     */
+    private fun getSkillBasePrompts(skill: SkillEntity): List<String> {
+        return when (skill.category.name.lowercase()) {
+            "reading_literature" -> listOf(
+                "What details in your story help you understand the main character?",
+                "How does the setting affect what happens in your story?",
+                "What lesson or message does your story teach?",
+                "How do the character's actions show what they're like inside?",
+                "What problem does the main character face in your story?"
+            )
+            "reading_informational" -> listOf(
+                "What is the main idea of your text?",
+                "How are the ideas in your text organized?",
+                "What evidence does the author use to support their point?",
+                "How does this text connect to what you already know?",
+                "What new information did you learn from this text?"
+            )
+            "writing" -> listOf(
+                "How can you organize your ideas clearly?",
+                "What details will help your reader understand your message?",
+                "How can you connect your ideas smoothly?",
+                "What words will make your writing more interesting?",
+                "How can you end your writing in a strong way?"
+            )
+            "language_grammar" -> listOf(
+                "How do the words in this sentence work together?",
+                "What does this word mean in your text?",
+                "How does changing this word change the meaning?",
+                "What pattern do you notice in these sentences?",
+                "How can you say this in a different way?"
+            )
+            "vocabulary_speaking" -> listOf(
+                "What does this word tell you about the character or situation?",
+                "How would you explain this idea to someone else?",
+                "What other words could you use instead?",
+                "How does the author's word choice affect the meaning?",
+                "What words help you picture what's happening?"
+            )
+            else -> listOf(
+                "What do you notice in your text that helps answer this question?",
+                "How does this connect to what you're learning?",
+                "What evidence can you find to support your thinking?"
+            )
+        }
+    }
+    
+    private fun calculateDifficultyForVariation(strategy: String, gradeLevel: Int): Float {
+        val baseDifficulty = when (gradeLevel) {
+            2, 3 -> 0.3f
+            4, 5 -> 0.4f
+            6, 7 -> 0.5f
+            8, 9 -> 0.6f
+            else -> 0.7f
+        }
+        
+        val strategyModifier = when (strategy) {
+            "scaffolding_variation" -> -0.1f
+            "complexity_adjustment" -> 0.0f
+            "metacognitive_focus" -> 0.1f
+            "question_type_shift" -> 0.05f
+            else -> 0.0f
+        }
+        
+        return (baseDifficulty + strategyModifier).coerceIn(0.1f, 1.0f)
+    }
+    
+    private fun mapStrategyToTemplateType(strategy: String): String {
+        return when (strategy) {
+            "scaffolding_variation" -> "foundation"
+            "complexity_adjustment" -> "practice"
+            "metacognitive_focus" -> "application"
+            "question_type_shift" -> "diagnostic"
+            "perspective_change" -> "challenge"
+            "context_variation" -> "test_aligned"
+            else -> "practice"
+        }
+    }
+    
+    private fun generateConstraintsForStrategy(strategy: String, gradeLevel: Int): String {
+        return when (strategy) {
+            "scaffolding_variation" -> "Provide clear guidance and support"
+            "complexity_adjustment" -> "Match cognitive level to grade $gradeLevel"
+            "metacognitive_focus" -> "Include thinking process reflection"
+            "question_type_shift" -> "Use varied question formats"
+            "perspective_change" -> "Encourage multiple viewpoints"
+            "context_variation" -> "Adapt to different text types"
+            else -> "Follow educational best practices"
+        }
+    }
+    
+    private fun generateVariationMetadata(strategy: String, skill: SkillEntity, gradeLevel: Int): String {
+        return JSONObject().apply {
+            put("strategy", strategy)
+            put("skill_name", skill.name)
+            put("skill_category", skill.category.name)
+            put("grade_level", gradeLevel)
+            put("generated_by", "ai_variation_system")
+            put("creation_timestamp", System.currentTimeMillis())
+            put("educational_approach", "socratic_method")
+            put("content_agnostic", true)
+        }.toString()
     }
     
     // Data classes

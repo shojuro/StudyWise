@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.studywise.ai.data.local.preferences.ThemeMode
 import com.studywise.ai.presentation.components.AccessibleButton
 import kotlinx.coroutines.delay
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +25,10 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onLogout: () -> Unit,
     onNavigateToAnalytics: () -> Unit = {},
+    onNavigateToChangePassword: () -> Unit = {},
+    onOpenTermsOfService: () -> Unit = {},
+    onOpenPrivacyPolicy: () -> Unit = {},
+    onOpenHelpSupport: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -157,7 +162,7 @@ fun SettingsScreen(
                     title = "Change Password",
                     description = "Update your account password",
                     icon = Icons.Default.Lock,
-                    onClick = { /* TODO: Navigate to change password */ }
+                    onClick = onNavigateToChangePassword
                 )
                 
                 SettingsItem(
@@ -193,19 +198,19 @@ fun SettingsScreen(
                 SettingsItem(
                     title = "Terms of Service",
                     icon = Icons.Default.Description,
-                    onClick = { /* TODO: Open terms */ }
+                    onClick = onOpenTermsOfService
                 )
                 
                 SettingsItem(
                     title = "Privacy Policy",
                     icon = Icons.Default.PrivacyTip,
-                    onClick = { /* TODO: Open privacy policy */ }
+                    onClick = onOpenPrivacyPolicy
                 )
                 
                 SettingsItem(
                     title = "Help & Support",
                     icon = Icons.Default.Help,
-                    onClick = { /* TODO: Open help */ }
+                    onClick = onOpenHelpSupport
                 )
             }
 
@@ -246,8 +251,14 @@ fun SettingsScreen(
     }
 
     if (uiState.showReminderTimeDialog) {
-        // TODO: Implement time picker dialog
-        viewModel.dismissReminderTimeDialog()
+        ReminderTimePickerDialog(
+            currentTime = uiState.reminderTime,
+            onTimeSelected = { hour, minute ->
+                viewModel.updateReminderTime(hour, minute)
+                viewModel.dismissReminderTimeDialog()
+            },
+            onDismiss = { viewModel.dismissReminderTimeDialog() }
+        )
     }
 }
 
@@ -444,6 +455,50 @@ fun ThemeSelectionDialog(
             }
         },
         confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReminderTimePickerDialog(
+    currentTime: String,
+    onTimeSelected: (hour: Int, minute: Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    // Parse current time (format: "HH:mm")
+    val timeParts = currentTime.split(":")
+    val currentHour = timeParts.getOrNull(0)?.toIntOrNull() ?: 9
+    val currentMinute = timeParts.getOrNull(1)?.toIntOrNull() ?: 0
+    
+    val timePickerState = rememberTimePickerState(
+        initialHour = currentHour,
+        initialMinute = currentMinute,
+        is24Hour = false
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Set Reminder Time") },
+        text = {
+            TimePicker(
+                state = timePickerState,
+                modifier = Modifier.padding(16.dp)
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onTimeSelected(timePickerState.hour, timePickerState.minute)
+                }
+            ) {
+                Text("Set Time")
+            }
+        },
+        dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }

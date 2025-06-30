@@ -9,6 +9,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.util.concurrent.Executors
 import javax.inject.Singleton
 
 @Module
@@ -26,6 +27,9 @@ object DatabaseModule {
             StudyWiseDatabase.DATABASE_NAME
         )
         .fallbackToDestructiveMigration() // For development only
+        .setQueryExecutor(Executors.newFixedThreadPool(4)) // Parallel query execution
+        .setTransactionExecutor(Executors.newSingleThreadExecutor()) // Sequential transactions
+        .enableMultiInstanceInvalidation() // Multi-process support
         .build()
     }
 
