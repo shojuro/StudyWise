@@ -21,7 +21,9 @@
       "Bash(touch:*)",
       "Bash(cmd.exe:*)",
       "Bash(powershell.exe:*)",
-      "Bash($env:JAVA_HOME = \"C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.15.6-hotspot\")"
+      "Bash($env:JAVA_HOME = \"C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.15.6-hotspot\")",
+      "Bash(whereis:*)",
+      "Bash(git clean:*)"
     ],
     "deny": []
   }

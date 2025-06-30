@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -20,13 +22,24 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
+        // Load properties from local.properties
+        val properties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(localPropertiesFile.inputStream())
+        }
+        
         // OpenAI API Key - Should be provided via local.properties or environment variable
-        val openAiApiKey = project.findProperty("OPENAI_API_KEY")?.toString() ?: "YOUR_API_KEY_HERE"
+        val openAiApiKey = properties.getProperty("OPENAI_API_KEY") ?: "YOUR_API_KEY_HERE"
         buildConfigField("String", "OPENAI_API_KEY", "\"$openAiApiKey\"")
         
         // Mistral API Key - Should be provided via local.properties or environment variable
-        val mistralApiKey = project.findProperty("MISTRAL_API_KEY")?.toString() ?: "YOUR_MISTRAL_API_KEY_HERE"
+        val mistralApiKey = properties.getProperty("MISTRAL_API_KEY") ?: "YOUR_MISTRAL_API_KEY_HERE"
         buildConfigField("String", "MISTRAL_API_KEY", "\"$mistralApiKey\"")
+        
+        // Google Cloud API Key
+        val googleCloudApiKey = properties.getProperty("GOOGLE_CLOUD_API_KEY") ?: "YOUR_GOOGLE_CLOUD_API_KEY_HERE"
+        buildConfigField("String", "GOOGLE_CLOUD_API_KEY", "\"$googleCloudApiKey\"")
     }
 
     buildTypes {
