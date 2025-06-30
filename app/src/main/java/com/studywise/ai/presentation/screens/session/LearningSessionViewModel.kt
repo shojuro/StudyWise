@@ -90,6 +90,13 @@ class LearningSessionViewModel @Inject constructor(
     fun submitBookText() {
         val text = _uiState.value.bookText.trim()
         
+        if (text.isEmpty()) {
+            _uiState.value = _uiState.value.copy(
+                bookTextError = "Please provide some text to analyze"
+            )
+            return
+        }
+        
         if (text.length < 50) {
             _uiState.value = _uiState.value.copy(
                 bookTextError = "Please enter at least 50 characters from your book"
@@ -99,11 +106,29 @@ class LearningSessionViewModel @Inject constructor(
 
         _uiState.value = _uiState.value.copy(
             waitingForBookText = false,
-            isLoading = true
+            isLoading = true,
+            bookTextError = null,
+            voiceState = VoiceTextCapture.VoiceState.Idle // Reset voice state
         )
 
         if (userId.isNotEmpty()) {
-            startSession()
+            viewModelScope.launch {
+                try {
+                    startSession()
+                } catch (e: Exception) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        waitingForBookText = true,
+                        bookTextError = "Failed to start session: ${e.message}"
+                    )
+                }
+            }
+        } else {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                waitingForBookText = true,
+                bookTextError = "Please log in to start a session"
+            )
         }
     }
     
@@ -116,23 +141,37 @@ class LearningSessionViewModel @Inject constructor(
     
     fun onPhotoSelected(uri: android.net.Uri) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isProcessingInput = true)
+            _uiState.value = _uiState.value.copy(isProcessingInput = true, bookTextError = null)
             
-            photoTextExtractor.extractText(uri).fold(
-                onSuccess = { extractedText ->
-                    _uiState.value = _uiState.value.copy(
-                        bookText = extractedText,
-                        isProcessingInput = false,
-                        bookTextError = null
-                    )
-                },
-                onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        bookTextError = error.message,
-                        isProcessingInput = false
-                    )
-                }
-            )
+            try {
+                photoTextExtractor.extractText(uri).fold(
+                    onSuccess = { extractedText ->
+                        if (extractedText.isNotBlank()) {
+                            _uiState.value = _uiState.value.copy(
+                                bookText = extractedText,
+                                isProcessingInput = false,
+                                bookTextError = null
+                            )
+                        } else {
+                            _uiState.value = _uiState.value.copy(
+                                bookTextError = "No text found in the image",
+                                isProcessingInput = false
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        _uiState.value = _uiState.value.copy(
+                            bookTextError = "Failed to extract text: ${error.message}",
+                            isProcessingInput = false
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    bookTextError = "Error processing image: ${e.message}",
+                    isProcessingInput = false
+                )
+            }
         }
     }
     
@@ -160,29 +199,40 @@ class LearningSessionViewModel @Inject constructor(
     
     fun startVoiceCapture() {
         viewModelScope.launch {
-            voiceTextCapture.clearTranscript()
-            voiceTextCapture.startListening().collect { state ->
-                _uiState.value = _uiState.value.copy(voiceState = state)
-                
-                when (state) {
-                    is VoiceTextCapture.VoiceState.Success -> {
-                        _uiState.value = _uiState.value.copy(
-                            bookText = state.text,
-                            bookTextError = null
-                        )
+            try {
+                voiceTextCapture.clearTranscript()
+                voiceTextCapture.startListening().collect { state ->
+                    _uiState.value = _uiState.value.copy(voiceState = state)
+                    
+                    when (state) {
+                        is VoiceTextCapture.VoiceState.Success -> {
+                            if (state.text.isNotBlank()) {
+                                _uiState.value = _uiState.value.copy(
+                                    bookText = state.text,
+                                    bookTextError = null
+                                )
+                            }
+                        }
+                        is VoiceTextCapture.VoiceState.Transcribing -> {
+                            _uiState.value = _uiState.value.copy(
+                                bookText = state.partialText,
+                                bookTextError = null
+                            )
+                        }
+                        is VoiceTextCapture.VoiceState.Error -> {
+                            _uiState.value = _uiState.value.copy(
+                                bookTextError = state.message,
+                                voiceState = VoiceTextCapture.VoiceState.Idle
+                            )
+                        }
+                        else -> {}
                     }
-                    is VoiceTextCapture.VoiceState.Transcribing -> {
-                        _uiState.value = _uiState.value.copy(
-                            bookText = state.partialText
-                        )
-                    }
-                    is VoiceTextCapture.VoiceState.Error -> {
-                        _uiState.value = _uiState.value.copy(
-                            bookTextError = state.message
-                        )
-                    }
-                    else -> {}
                 }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    bookTextError = "Voice capture error: ${e.message}",
+                    voiceState = VoiceTextCapture.VoiceState.Idle
+                )
             }
         }
     }

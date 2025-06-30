@@ -176,6 +176,41 @@ class ProfileViewModel @Inject constructor(
         )
     }
     
+    fun uploadProfileImage(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSaving = true)
+            
+            userRepository.uploadProfileImage(uri).fold(
+                onSuccess = { imageUrl ->
+                    val currentUser = _uiState.value.user ?: return@fold
+                    val updatedUser = currentUser.copy(profileImageUrl = imageUrl)
+                    
+                    userRepository.updateUserProfile(updatedUser).fold(
+                        onSuccess = {
+                            _uiState.value = _uiState.value.copy(
+                                isSaving = false,
+                                profileImageUrl = imageUrl,
+                                user = updatedUser
+                            )
+                        },
+                        onFailure = { error ->
+                            _uiState.value = _uiState.value.copy(
+                                isSaving = false,
+                                saveError = "Failed to update profile image: ${error.message}"
+                            )
+                        }
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isSaving = false,
+                        saveError = "Failed to upload image: ${error.message}"
+                    )
+                }
+            )
+        }
+    }
+    
     private fun formatDate(date: java.util.Date): String {
         val formatter = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
         return formatter.format(date)

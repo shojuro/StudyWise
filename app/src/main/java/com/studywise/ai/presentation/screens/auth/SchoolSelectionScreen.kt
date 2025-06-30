@@ -159,29 +159,41 @@ fun SchoolSelectionScreen(
             }
 
             // Action buttons
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedButton(
-                    onClick = { viewModel.onManualEntryClick() },
-                    modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Icon(Icons.Default.Edit, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Enter Manually")
-                }
+                    OutlinedButton(
+                        onClick = { viewModel.onManualEntryClick() },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Enter Manually")
+                    }
 
-                AccessibleButton(
-                    onClick = {
-                        viewModel.confirmSelection()
-                        val schoolId = uiState.selectedSchool?.id ?: ""
-                        onSchoolSelected(schoolId)
-                    },
-                    text = "Continue",
-                    modifier = Modifier.weight(1f),
-                    enabled = uiState.selectedSchool != null || uiState.manualSchoolName.isNotEmpty()
-                )
+                    AccessibleButton(
+                        onClick = {
+                            viewModel.confirmSelection()
+                            val schoolId = uiState.selectedSchool?.id ?: ""
+                            onSchoolSelected(schoolId)
+                        },
+                        text = "Continue",
+                        modifier = Modifier.weight(1f),
+                        enabled = uiState.selectedSchool != null || uiState.manualSchoolName.isNotEmpty()
+                    )
+                }
+                
+                TextButton(
+                    onClick = { onSchoolSelected("") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Skip for now")
+                }
             }
         }
     }

@@ -16,11 +16,13 @@ data class UserEntity(
     val createdAt: Date,
     val lastLoginAt: Date? = null,
     val isActive: Boolean = true,
-    val parentId: String? = null // For linking students to parents
+    val parentId: String? = null, // For linking students to parents
+    val profileImageUrl: String? = null // Profile picture URL
 )
 
 enum class UserRole {
     STUDENT,
     PARENT,
-    TEACHER
+    TEACHER,
+    ADULT
 }

@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.studywise.ai.data.local.preferences.ThemeMode
 import com.studywise.ai.presentation.components.AccessibleButton
+import com.studywise.ai.presentation.components.AccessiblePasswordTextField
 import kotlinx.coroutines.delay
 import java.util.Calendar
 
@@ -162,7 +163,7 @@ fun SettingsScreen(
                     title = "Change Password",
                     description = "Update your account password",
                     icon = Icons.Default.Lock,
-                    onClick = onNavigateToChangePassword
+                    onClick = { viewModel.showChangePasswordDialog() }
                 )
                 
                 SettingsItem(
@@ -258,6 +259,16 @@ fun SettingsScreen(
                 viewModel.dismissReminderTimeDialog()
             },
             onDismiss = { viewModel.dismissReminderTimeDialog() }
+        )
+    }
+
+    if (uiState.showChangePasswordDialog) {
+        ChangePasswordDialog(
+            onChangePassword = { currentPassword, newPassword ->
+                viewModel.changePassword(currentPassword, newPassword)
+            },
+            onDismiss = { viewModel.dismissChangePasswordDialog() },
+            isLoading = uiState.isChangingPassword
         )
     }
 }
@@ -456,6 +467,95 @@ fun ThemeSelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun ChangePasswordDialog(
+    onChangePassword: (currentPassword: String, newPassword: String) -> Unit,
+    onDismiss: () -> Unit,
+    isLoading: Boolean = false
+) {
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Change Password") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                AccessiblePasswordTextField(
+                    value = currentPassword,
+                    onValueChange = { currentPassword = it },
+                    label = "Current Password",
+                    enabled = !isLoading
+                )
+                
+                AccessiblePasswordTextField(
+                    value = newPassword,
+                    onValueChange = { 
+                        newPassword = it
+                        passwordError = null
+                    },
+                    label = "New Password",
+                    enabled = !isLoading,
+                    isError = passwordError != null,
+                    errorMessage = passwordError
+                )
+                
+                AccessiblePasswordTextField(
+                    value = confirmPassword,
+                    onValueChange = { 
+                        confirmPassword = it
+                        if (it != newPassword) {
+                            passwordError = "Passwords do not match"
+                        } else {
+                            passwordError = null
+                        }
+                    },
+                    label = "Confirm New Password",
+                    enabled = !isLoading,
+                    isError = passwordError != null
+                )
+            }
+        },
+        confirmButton = {
+            AccessibleButton(
+                onClick = {
+                    when {
+                        currentPassword.isEmpty() || newPassword.isEmpty() -> {
+                            passwordError = "Please fill all fields"
+                        }
+                        newPassword != confirmPassword -> {
+                            passwordError = "Passwords do not match"
+                        }
+                        newPassword.length < 6 -> {
+                            passwordError = "Password must be at least 6 characters"
+                        }
+                        else -> {
+                            onChangePassword(currentPassword, newPassword)
+                        }
+                    }
+                },
+                text = "Change Password",
+                enabled = !isLoading && currentPassword.isNotEmpty() && 
+                         newPassword.isNotEmpty() && confirmPassword.isNotEmpty(),
+                isLoading = isLoading
+            )
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
                 Text("Cancel")
             }
         }

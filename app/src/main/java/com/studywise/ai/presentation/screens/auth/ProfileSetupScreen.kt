@@ -47,6 +47,14 @@ fun ProfileSetupScreen(
     ) { uri: Uri? ->
         uri?.let { viewModel.onProfileImageSelected(it) }
     }
+    
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap ->
+        bitmap?.let { viewModel.onCameraImageCaptured(it) }
+    }
+    
+    var showImageSourceDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -83,7 +91,7 @@ fun ProfileSetupScreen(
                         modifier = Modifier
                             .size(120.dp)
                             .clip(CircleShape)
-                            .clickable { imagePickerLauncher.launch("image/*") },
+                            .clickable { showImageSourceDialog = true },
                         contentScale = ContentScale.Crop
                     )
                 } else {
@@ -92,7 +100,7 @@ fun ProfileSetupScreen(
                             .size(120.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primaryContainer)
-                            .clickable { imagePickerLauncher.launch("image/*") },
+                            .clickable { showImageSourceDialog = true },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -111,7 +119,7 @@ fun ProfileSetupScreen(
                         .size(36.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
-                        .clickable { imagePickerLauncher.launch("image/*") },
+                        .clickable { showImageSourceDialog = true },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -168,6 +176,12 @@ fun ProfileSetupScreen(
                 }
                 UserRole.PARENT -> {
                     ParentProfileFields(
+                        uiState = uiState,
+                        viewModel = viewModel
+                    )
+                }
+                UserRole.ADULT -> {
+                    AdultProfileFields(
                         uiState = uiState,
                         viewModel = viewModel
                     )
@@ -230,6 +244,53 @@ fun ProfileSetupScreen(
                 isLoading = uiState.isLoading
             )
         }
+    }
+    
+    // Image source selection dialog
+    if (showImageSourceDialog) {
+        AlertDialog(
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("Choose Image Source") },
+            text = {
+                Column {
+                    TextButton(
+                        onClick = {
+                            cameraLauncher.launch(null)
+                            showImageSourceDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Default.Camera,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("Take Photo")
+                    }
+                    TextButton(
+                        onClick = {
+                            imagePickerLauncher.launch("image/*")
+                            showImageSourceDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Default.PhotoLibrary,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("Choose from Gallery")
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showImageSourceDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -340,6 +401,47 @@ fun ParentProfileFields(
             onValueChange = viewModel::onParentalGoalsChange,
             label = { Text("Educational Goals for Your Children") },
             placeholder = { Text("What do you hope to achieve?") },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun AdultProfileFields(
+    uiState: ProfileSetupUiState,
+    viewModel: ProfileSetupViewModel
+) {
+    Column {
+        // Interests
+        Text(
+            text = "Areas of Interest",
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val interests = listOf("Technology", "History", "Science", "Arts", "Literature", "Business", "Languages")
+            interests.forEach { interest ->
+                FilterChip(
+                    selected = interest in uiState.favoriteSubjects,
+                    onClick = { viewModel.toggleFavoriteSubject(interest) },
+                    label = { Text(interest) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Learning goals
+        OutlinedTextField(
+            value = uiState.learningGoals,
+            onValueChange = viewModel::onLearningGoalsChange,
+            label = { Text("Learning Goals") },
+            placeholder = { Text("What would you like to learn?") },
             modifier = Modifier.fillMaxWidth()
         )
     }

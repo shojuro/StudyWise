@@ -1001,7 +1001,11 @@ fun BookTextInputContent(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = { onSubmit() }
+                        onDone = { 
+                            if (uiState.bookText.length >= 50) {
+                                onSubmit()
+                            }
+                        }
                     ),
                     maxLines = 10
                 )

@@ -258,7 +258,11 @@ fun BookTextInputContent(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = { onSubmit() }
+                        onDone = { 
+                            if (uiState.bookText.length >= 50) {
+                                onSubmit()
+                            }
+                        }
                     ),
                     maxLines = 10
                 )
@@ -479,7 +483,7 @@ fun QuestionContent(
             keyboardActions = KeyboardActions(
                 onDone = {
                     focusManager.clearFocus()
-                    if (!uiState.isAnswerSubmitted) {
+                    if (!uiState.isAnswerSubmitted && uiState.userAnswer.isNotBlank()) {
                         onSubmitAnswer()
                     }
                 }

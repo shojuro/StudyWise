@@ -187,7 +187,7 @@ fun RegisterScreen(
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
                         ) {
-                            (4..12).forEach { grade ->
+                            (2..12).forEach { grade ->
                                 DropdownMenuItem(
                                     text = { Text("Grade $grade") },
                                     onClick = {

@@ -54,7 +54,9 @@ class HybridAIRepository @Inject constructor(
     }
     
     // Use Mistral for cost-effective content generation
+    // IMPORTANT: OpenAI API key was compromised, only use Mistral
     private val useMistralForContent = true
+    private val useOnlyMistral = true
     
     // Common objects that ML Kit struggles with
     private val commonSchoolObjects = listOf(
@@ -110,12 +112,12 @@ class HybridAIRepository @Inject constructor(
     }
     
     private suspend fun generateContentForObject(objectName: String, confidence: Float): Result<IdentifiedObject> {
-        // Use Mistral for educational content generation (cheaper than GPT-4)
-        return if (useMistralForContent && BuildConfig.MISTRAL_API_KEY != "YOUR_MISTRAL_API_KEY_HERE") {
+        // Always use Mistral since OpenAI key was compromised
+        return if (BuildConfig.MISTRAL_API_KEY != "YOUR_MISTRAL_API_KEY_HERE") {
             generateEducationalContentWithMistral(objectName, confidence)
         } else {
-            // Fallback to OpenAI
-            generateEducationalContentWithOpenAI(objectName, confidence)
+            // No API key available, use offline fallback
+            Result.failure(Exception("AI service unavailable. Please configure Mistral API key."))
         }
     }
     
@@ -228,11 +230,11 @@ class HybridAIRepository @Inject constructor(
             return Result.success(cached)
         }
         
-        // Use Mistral for cost-effective sentence generation
-        val result = if (useMistralForContent && BuildConfig.MISTRAL_API_KEY != "YOUR_MISTRAL_API_KEY_HERE") {
+        // Always use Mistral since OpenAI key was compromised
+        val result = if (BuildConfig.MISTRAL_API_KEY != "YOUR_MISTRAL_API_KEY_HERE") {
             generateSentencesWithMistral(word, minGrade, maxGrade)
         } else {
-            generateSentencesWithOpenAI(word, minGrade, maxGrade)
+            Result.failure(Exception("AI service unavailable. Please configure Mistral API key."))
         }
         
         // Cache successful results
@@ -370,11 +372,11 @@ class HybridAIRepository @Inject constructor(
             return Result.success(cached)
         }
         
-        // Use Mistral for cost-effective lesson generation
-        val result = if (useMistralForContent && BuildConfig.MISTRAL_API_KEY != "YOUR_MISTRAL_API_KEY_HERE") {
+        // Always use Mistral since OpenAI key was compromised
+        val result = if (BuildConfig.MISTRAL_API_KEY != "YOUR_MISTRAL_API_KEY_HERE") {
             createLessonWithMistral(objectName, grade, duration)
         } else {
-            createLessonWithOpenAI(objectName, grade, duration)
+            Result.failure(Exception("AI service unavailable. Please configure Mistral API key."))
         }
         
         // Cache successful results
@@ -507,10 +509,11 @@ class HybridAIRepository @Inject constructor(
         studentResponse: String,
         grade: Int
     ): Result<String> {
-        return if (useMistralForContent && BuildConfig.MISTRAL_API_KEY != "YOUR_MISTRAL_API_KEY_HERE") {
+        // Always use Mistral since OpenAI key was compromised
+        return if (BuildConfig.MISTRAL_API_KEY != "YOUR_MISTRAL_API_KEY_HERE") {
             generateResponseWithMistral(context, studentResponse, grade)
         } else {
-            generateResponseWithOpenAI(context, studentResponse, grade)
+            Result.failure(Exception("AI service unavailable. Please configure Mistral API key."))
         }
     }
     
@@ -590,33 +593,13 @@ class HybridAIRepository @Inject constructor(
     }
     
     override suspend fun generateSpeech(text: String): Result<ByteArray> {
-        // Continue using OpenAI for speech synthesis as Mistral doesn't support it
-        return safeApiCall {
-            openAIService.createSpeech(
-                authHeader = openAIAuthHeader,
-                request = TextToSpeechRequest(
-                    input = text,
-                    voice = "nova"
-                )
-            ).bytes()
-        }
+        // Speech synthesis disabled - OpenAI key was compromised and Mistral doesn't support it
+        return Result.failure(Exception("Speech synthesis is temporarily unavailable."))
     }
     
     override suspend fun transcribeAudio(audioFile: File): Result<String> {
-        // Continue using OpenAI Whisper for transcription
-        return safeApiCall {
-            val requestBody = audioFile.asRequestBody("audio/wav".toMediaTypeOrNull())
-            val audioPart = MultipartBody.Part.createFormData("file", audioFile.name, requestBody)
-            
-            val response = openAIService.createTranscription(
-                authHeader = openAIAuthHeader,
-                audio = audioPart,
-                model = "whisper-1".toRequestBody("text/plain".toMediaTypeOrNull()),
-                language = "en".toRequestBody("text/plain".toMediaTypeOrNull())
-            )
-            
-            response.text
-        }
+        // Audio transcription disabled - OpenAI key was compromised and Mistral doesn't support it
+        return Result.failure(Exception("Audio transcription is temporarily unavailable."))
     }
     
     // Helper methods

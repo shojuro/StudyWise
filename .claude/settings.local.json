@@ -37,7 +37,12 @@
       "Bash(JAVA_HOME=\"/mnt/c/Program Files/Eclipse Adoptium/jdk-17.0.15.6-hotspot\" ./gradlew clean assembleDebug)",
       "Bash(\"/mnt/c/Program Files/Eclipse Adoptium/jdk-17.0.15.6-hotspot/bin/java\" -version)",
       "Bash(/mnt/c/DEV/StudyWise-Fresh/build_from_wsl.sh:*)",
-      "Bash(/mnt/c/Windows/System32/cmd.exe /c \"gradlew.bat clean assembleDebug\")"
+      "Bash(/mnt/c/Windows/System32/cmd.exe /c \"gradlew.bat clean assembleDebug\")",
+      "Bash(./build_apk.sh)",
+      "Bash(dos2unix:*)",
+      "Bash(/mnt/c/Windows/System32/cmd.exe /c \"cd C:\\\\DEV\\\\StudyWise-Fresh && set JAVA_HOME=C:\\\\Program Files\\\\Eclipse Adoptium\\\\jdk-17.0.15.6-hotspot && gradlew.bat clean assembleDebug\")",
+      "Bash(/mnt/c/Windows/System32/cmd.exe /c \"dir \\\"C:\\\\Program Files\\\\Eclipse Adoptium\\\\jdk-17.0.15.6-hotspot\\\"\")",
+      "Bash(/mnt/c/Windows/System32/cmd.exe /c \"where java\")"
     ],
     "deny": []
   }

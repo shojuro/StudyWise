@@ -17,6 +17,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import com.studywise.ai.data.local.entity.UserRole
 import com.studywise.ai.presentation.components.AccessibleButton
 import com.studywise.ai.presentation.components.AccessibleTextField
@@ -74,7 +77,8 @@ fun ProfileScreen(
                     profileImageUrl = uiState.profileImageUrl,
                     isEditMode = uiState.isEditMode,
                     editDisplayName = uiState.editDisplayName,
-                    onDisplayNameChange = viewModel::onDisplayNameChange
+                    onDisplayNameChange = viewModel::onDisplayNameChange,
+                    onUploadImage = viewModel::uploadProfileImage
                 )
 
                 if (uiState.isEditMode) {
@@ -164,7 +168,8 @@ fun ProfileHeader(
     profileImageUrl: String?,
     isEditMode: Boolean,
     editDisplayName: String,
-    onDisplayNameChange: (String) -> Unit
+    onDisplayNameChange: (String) -> Unit,
+    onUploadImage: (android.net.Uri) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -179,11 +184,24 @@ fun ProfileHeader(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Profile Image
+            val photoLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri: android.net.Uri? ->
+                uri?.let { 
+                    onUploadImage(it)
+                }
+            }
+            
             Box(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable(enabled = isEditMode) {
+                        if (isEditMode) {
+                            photoLauncher.launch("image/*")
+                        }
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -192,6 +210,24 @@ fun ProfileHeader(
                     modifier = Modifier.size(60.dp),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
+                
+                if (isEditMode) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Change Photo",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

@@ -34,6 +34,8 @@ data class SettingsUiState(
     val showThemeDialog: Boolean = false,
     val showLogoutDialog: Boolean = false,
     val showReminderTimeDialog: Boolean = false,
+    val showChangePasswordDialog: Boolean = false,
+    val isChangingPassword: Boolean = false,
     
     // Messages
     val successMessage: String? = null,
@@ -201,6 +203,39 @@ class SettingsViewModel @Inject constructor(
                     errorMessage = e.message ?: "Failed to logout"
                 )
             }
+        }
+    }
+    
+    fun showChangePasswordDialog() {
+        _uiState.value = _uiState.value.copy(showChangePasswordDialog = true)
+    }
+    
+    fun dismissChangePasswordDialog() {
+        _uiState.value = _uiState.value.copy(
+            showChangePasswordDialog = false,
+            isChangingPassword = false
+        )
+    }
+    
+    fun changePassword(currentPassword: String, newPassword: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isChangingPassword = true)
+            
+            authRepository.changePassword(currentPassword, newPassword).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(
+                        isChangingPassword = false,
+                        showChangePasswordDialog = false,
+                        successMessage = "Password changed successfully"
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isChangingPassword = false,
+                        errorMessage = error.message ?: "Failed to change password"
+                    )
+                }
+            )
         }
     }
 }

@@ -53,6 +53,7 @@ fun StudyWiseNavigation(
                         UserRole.STUDENT -> Screen.Dashboard.route
                         UserRole.PARENT -> Screen.ParentDashboard.route
                         UserRole.TEACHER -> Screen.TeacherDashboard.route
+                        UserRole.ADULT -> Screen.Dashboard.route // Adults use student dashboard
                     }
                     navController.navigate(dashboardRoute) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
@@ -74,6 +75,7 @@ fun StudyWiseNavigation(
                             UserRole.STUDENT -> Screen.Dashboard.route
                             UserRole.PARENT -> Screen.ParentDashboard.route
                             UserRole.TEACHER -> Screen.TeacherDashboard.route
+                            UserRole.ADULT -> Screen.Dashboard.route // Adults use student dashboard
                         }
                         navController.navigate(dashboardRoute) {
                             popUpTo(Screen.Login.route) { inclusive = true }
@@ -153,6 +155,7 @@ fun StudyWiseNavigation(
                         UserRole.STUDENT -> Screen.Dashboard.route
                         UserRole.PARENT -> Screen.ParentDashboard.route
                         UserRole.TEACHER -> Screen.TeacherDashboard.route
+                        UserRole.ADULT -> Screen.Dashboard.route // Adults use student dashboard
                         null -> Screen.Dashboard.route
                     }
                     navController.navigate(dashboardRoute) {

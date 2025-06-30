@@ -1,14 +1,19 @@
 package com.studywise.ai.presentation.screens.auth
 
+import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.studywise.ai.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import javax.inject.Inject
 
 data class ProfileSetupUiState(
@@ -38,7 +43,8 @@ data class ProfileSetupUiState(
 
 @HiltViewModel
 class ProfileSetupViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileSetupUiState())
@@ -59,6 +65,24 @@ class ProfileSetupViewModel @Inject constructor(
 
     fun onProfileImageSelected(uri: Uri) {
         _uiState.value = _uiState.value.copy(profileImageUri = uri)
+    }
+    
+    fun onCameraImageCaptured(bitmap: Bitmap) {
+        viewModelScope.launch {
+            try {
+                // Save bitmap to cache directory
+                val file = File(context.cacheDir, "profile_image_${System.currentTimeMillis()}.jpg")
+                val outputStream = FileOutputStream(file)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
+                outputStream.flush()
+                outputStream.close()
+                
+                val uri = Uri.fromFile(file)
+                _uiState.value = _uiState.value.copy(profileImageUri = uri)
+            } catch (e: Exception) {
+                // Handle error silently for now
+            }
+        }
     }
 
     fun onDailyRemindersChange(enabled: Boolean) {
