@@ -64,9 +64,15 @@ class QuestionRepositoryImpl @Inject constructor(
 
         return Question(
             id = UUID.randomUUID().toString(),
-            text = questionTemplates.random(),
+            skillId = "reading_comprehension",
+            gradeLevel = gradeLevel,
+            prompt = questionTemplates.random(),
             type = "comprehension",
-            difficulty = difficulty,
+            difficulty = when(difficulty) {
+                QuestionDifficulty.EASY -> 0.3f
+                QuestionDifficulty.MEDIUM -> 0.5f
+                QuestionDifficulty.HARD -> 0.7f
+            },
             hints = listOf(
                 "Look for repeated ideas or words",
                 "Think about the author's purpose",
@@ -82,13 +88,13 @@ class QuestionRepositoryImpl @Inject constructor(
         difficulty: QuestionDifficulty
     ): Question {
         return when (gradeLevel) {
-            in 4..5 -> generateElementaryMathQuestion(difficulty)
-            in 6..8 -> generateMiddleSchoolMathQuestion(difficulty)
-            else -> generateHighSchoolMathQuestion(difficulty)
+            in 4..5 -> generateElementaryMathQuestion(gradeLevel, difficulty)
+            in 6..8 -> generateMiddleSchoolMathQuestion(gradeLevel, difficulty)
+            else -> generateHighSchoolMathQuestion(gradeLevel, difficulty)
         }
     }
 
-    private fun generateElementaryMathQuestion(difficulty: QuestionDifficulty): Question {
+    private fun generateElementaryMathQuestion(gradeLevel: Int, difficulty: QuestionDifficulty): Question {
         val (num1, num2, operation) = when (difficulty) {
             QuestionDifficulty.EASY -> {
                 val n1 = (1..10).random()
@@ -116,9 +122,15 @@ class QuestionRepositoryImpl @Inject constructor(
 
         return Question(
             id = UUID.randomUUID().toString(),
-            text = "What is $num1 $operation $num2?",
+            skillId = "basic_arithmetic",
+            gradeLevel = gradeLevel,
+            prompt = "What is $num1 $operation $num2?",
             type = "calculation",
-            difficulty = difficulty,
+            difficulty = when(difficulty) {
+                QuestionDifficulty.EASY -> 0.3f
+                QuestionDifficulty.MEDIUM -> 0.5f
+                QuestionDifficulty.HARD -> 0.7f
+            },
             hints = listOf(
                 when (operation) {
                     "+" -> "Try counting up from $num1"
@@ -131,14 +143,14 @@ class QuestionRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun generateMiddleSchoolMathQuestion(difficulty: QuestionDifficulty): Question {
+    private fun generateMiddleSchoolMathQuestion(gradeLevel: Int, difficulty: QuestionDifficulty): Question {
         // Simplified for MVP
-        return generateElementaryMathQuestion(difficulty)
+        return generateElementaryMathQuestion(gradeLevel, difficulty)
     }
 
-    private fun generateHighSchoolMathQuestion(difficulty: QuestionDifficulty): Question {
+    private fun generateHighSchoolMathQuestion(gradeLevel: Int, difficulty: QuestionDifficulty): Question {
         // Simplified for MVP
-        return generateElementaryMathQuestion(difficulty)
+        return generateElementaryMathQuestion(gradeLevel, difficulty)
     }
 
     private fun generateScienceQuestion(gradeLevel: Int, difficulty: QuestionDifficulty): Question {
@@ -152,9 +164,15 @@ class QuestionRepositoryImpl @Inject constructor(
 
         return Question(
             id = UUID.randomUUID().toString(),
-            text = topics.random(),
+            skillId = "science_comprehension",
+            gradeLevel = gradeLevel,
+            prompt = topics.random(),
             type = "comprehension",
-            difficulty = difficulty,
+            difficulty = when(difficulty) {
+                QuestionDifficulty.EASY -> 0.3f
+                QuestionDifficulty.MEDIUM -> 0.5f
+                QuestionDifficulty.HARD -> 0.7f
+            },
             hints = listOf(
                 "Think about what you observe in nature",
                 "Consider cause and effect",
@@ -168,9 +186,15 @@ class QuestionRepositoryImpl @Inject constructor(
     private fun generateHistoryQuestion(gradeLevel: Int, difficulty: QuestionDifficulty): Question {
         return Question(
             id = UUID.randomUUID().toString(),
-            text = "Why is it important to learn about history?",
+            skillId = "history_reflection",
+            gradeLevel = gradeLevel,
+            prompt = "Why is it important to learn about history?",
             type = "reflection",
-            difficulty = difficulty,
+            difficulty = when(difficulty) {
+                QuestionDifficulty.EASY -> 0.3f
+                QuestionDifficulty.MEDIUM -> 0.5f
+                QuestionDifficulty.HARD -> 0.7f
+            },
             hints = listOf(
                 "Think about how the past affects the present",
                 "Consider what we can learn from others' experiences"
@@ -187,9 +211,15 @@ class QuestionRepositoryImpl @Inject constructor(
     ): Question {
         return Question(
             id = UUID.randomUUID().toString(),
-            text = "What interests you most about $subject?",
+            skillId = "general_reflection",
+            gradeLevel = gradeLevel,
+            prompt = "What interests you most about $subject?",
             type = "reflection",
-            difficulty = difficulty,
+            difficulty = when(difficulty) {
+                QuestionDifficulty.EASY -> 0.3f
+                QuestionDifficulty.MEDIUM -> 0.5f
+                QuestionDifficulty.HARD -> 0.7f
+            },
             hints = listOf(
                 "Think about what you enjoy learning",
                 "Consider how this subject relates to your life"
@@ -201,16 +231,16 @@ class QuestionRepositoryImpl @Inject constructor(
 
     private suspend fun saveQuestionToDatabase(question: Question) {
         val entity = QuestionEntity(
-            id = question.id,
-            prompt = question.text,
+            skillId = question.skillId.toLongOrNull() ?: 1L,
+            gradeLevel = question.gradeLevel,
+            prompt = question.prompt,
             type = question.type,
-            difficulty = question.difficulty.name,
+            difficulty = question.difficulty,
             hints = question.hints.joinToString("|"),
             correctAnswer = question.correctAnswer,
             explanation = question.explanation,
             options = question.options?.joinToString("|"),
-            skillId = question.skillId ?: "",
-            gradeLevel = question.gradeLevel ?: 6,
+            followUpQuestions = question.followUpQuestions?.joinToString("|"),
             createdAt = Date()
         )
         questionDao.insertQuestion(entity)
@@ -218,7 +248,7 @@ class QuestionRepositoryImpl @Inject constructor(
 
     override suspend fun getQuestionById(questionId: String): Result<Question> = withContext(Dispatchers.IO) {
         try {
-            val entity = questionDao.getQuestionById(questionId)
+            val entity = questionDao.getQuestionById(questionId.toLongOrNull() ?: 0L)
             if (entity != null) {
                 Result.success(entity.toDomainModel())
             } else {
@@ -237,20 +267,21 @@ class QuestionRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
-}
-
-// Extension function to convert entity to domain model
-private fun QuestionEntity.toDomainModel(): Question {
-    return Question(
-        id = id,
-        text = prompt,
-        type = type,
-        difficulty = QuestionDifficulty.valueOf(difficulty),
-        hints = hints.split("|").filter { it.isNotEmpty() },
-        correctAnswer = correctAnswer ?: "",
-        explanation = explanation ?: "",
-        options = options?.split("|")?.filter { it.isNotEmpty() },
-        skillId = skillId,
-        gradeLevel = gradeLevel
-    )
+    
+    private fun QuestionEntity.toDomainModel(): Question {
+        return Question(
+            id = id.toString(),
+            skillId = skillId.toString(), 
+            gradeLevel = gradeLevel,
+            prompt = prompt,
+            type = type,
+            difficulty = difficulty,
+            hints = hints.split("|").filter { it.isNotBlank() },
+            correctAnswer = correctAnswer,
+            explanation = explanation,
+            options = options?.split("|")?.filter { it.isNotBlank() },
+            followUpQuestions = followUpQuestions?.split("|")?.filter { it.isNotBlank() },
+            createdAt = createdAt
+        )
+    }
 }

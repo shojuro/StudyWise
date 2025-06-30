@@ -20,13 +20,18 @@ data class QuestionDto(
 ) {
     fun toEntity(): QuestionEntity {
         return QuestionEntity(
-            id = id,
-            skillId = skillIds.firstOrNull() ?: subject, // Use first skill or subject as fallback
+            id = id.toLongOrNull() ?: 0L,
+            skillId = skillIds.firstOrNull()?.toLongOrNull() ?: 1L, // Use first skill or default
             gradeLevel = gradeLevel,
             prompt = content,
             hints = hints?.joinToString("|") ?: "",
             type = type,
-            difficulty = difficulty.uppercase(),
+            difficulty = when(difficulty.uppercase()) {
+                "EASY" -> 0.3f
+                "MEDIUM" -> 0.5f
+                "HARD" -> 0.7f
+                else -> 0.5f
+            },
             correctAnswer = correctAnswer,
             explanation = explanation,
             options = options?.joinToString("|"),

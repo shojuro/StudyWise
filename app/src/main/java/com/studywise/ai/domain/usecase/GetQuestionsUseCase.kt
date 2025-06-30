@@ -16,32 +16,31 @@ class GetQuestionsUseCase @Inject constructor(
         count: Int = 5
     ): List<Question> {
         // Get unasked questions first
-        val questions = questionDao.getUnaskedQuestions(userId, skillId, gradeLevel, count)
+        val questions = questionDao.getUnaskedQuestions(userId, skillId.toLongOrNull() ?: 0L, gradeLevel, count)
         
         // If not enough unasked questions, get any questions for the skill
         val allQuestions = if (questions.size < count) {
-            questionDao.getQuestionsBySkillAndGrade(skillId, gradeLevel)
+            questionDao.getQuestionsBySkillAndGrade(skillId.toLongOrNull() ?: 0L, gradeLevel)
         } else {
             questions
         }
 
         // Get skill name
-        val skill = skillDao.getSkillById(skillId)
+        val skill = skillDao.getSkillById(skillId.toLongOrNull() ?: 0L)
         val skillName = skill?.name ?: "Unknown Skill"
 
         return allQuestions.take(count).map { entity ->
             Question(
-                id = entity.id,
-                text = entity.prompt,
+                id = entity.id.toString(),
+                skillId = entity.skillId.toString(),
+                gradeLevel = entity.gradeLevel,
+                prompt = entity.prompt,
                 type = entity.type,
-                difficulty = com.studywise.ai.domain.model.QuestionDifficulty.valueOf(entity.difficulty),
+                difficulty = entity.difficulty,
                 hints = entity.hints.split("|").filter { it.isNotEmpty() },
                 correctAnswer = entity.correctAnswer ?: "Student's thoughtful response",
                 explanation = entity.explanation ?: "Good thinking! Keep exploring the text.",
                 options = entity.options?.split("|")?.filter { it.isNotEmpty() },
-                skillId = entity.skillId,
-                skillName = skillName,
-                gradeLevel = entity.gradeLevel,
                 followUpQuestions = entity.followUpQuestions?.split("|")?.filter { it.isNotEmpty() } ?: emptyList()
             )
         }
@@ -75,7 +74,7 @@ class GetQuestionsUseCase @Inject constructor(
             
             skills.collect { skillList ->
                 for (skill in skillList.take(2)) { // Take 2 skills per category for variety
-                    val questions = getQuestionsForSkill(userId, skill.id, gradeLevel, 2)
+                    val questions = getQuestionsForSkill(userId, skill.id.toString(), gradeLevel, 2)
                     allQuestions.addAll(questions)
                 }
             }

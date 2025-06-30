@@ -13,10 +13,13 @@ interface QuestionDao {
     suspend fun insertQuestions(questions: List<QuestionEntity>)
 
     @Query("SELECT * FROM questions WHERE id = :questionId")
-    suspend fun getQuestionById(questionId: String): QuestionEntity?
+    suspend fun getQuestionById(questionId: Long): QuestionEntity?
 
     @Query("SELECT * FROM questions WHERE skillId = :skillId AND gradeLevel = :gradeLevel")
-    suspend fun getQuestionsBySkillAndGrade(skillId: String, gradeLevel: Int): List<QuestionEntity>
+    suspend fun getQuestionsBySkillAndGrade(skillId: Long, gradeLevel: Int): List<QuestionEntity>
+    
+    @Query("SELECT * FROM questions WHERE skillId = :skillId AND gradeLevel = :gradeLevel")
+    suspend fun getQuestionsForSkillAndGrade(skillId: Long, gradeLevel: Int): List<QuestionEntity>
 
     @Query("SELECT * FROM questions WHERE gradeLevel = :gradeLevel")
     fun getQuestionsByGrade(gradeLevel: Int): Flow<List<QuestionEntity>>
@@ -38,7 +41,7 @@ interface QuestionDao {
     """)
     suspend fun getUnaskedQuestions(
         userId: String,
-        skillId: String,
+        skillId: Long,
         gradeLevel: Int,
         limit: Int
     ): List<QuestionEntity>

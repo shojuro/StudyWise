@@ -49,7 +49,7 @@ class DatabaseInitializer @Inject constructor(
         literatureSkills.forEach { name ->
             skills.add(
                 SkillEntity(
-                    id = "lit_${name.lowercase().replace(" ", "_")}",
+                    code = "lit_${name.lowercase().replace(" ", "_")}",
                     category = SkillCategory.READING_LITERATURE,
                     name = name,
                     description = "Analyze and understand $name in literary texts",
@@ -180,13 +180,12 @@ class DatabaseInitializer @Inject constructor(
         (characterTraitsQuestions + themeQuestions).forEach { data ->
             questions.add(
                 QuestionEntity(
-                    id = UUID.randomUUID().toString(),
-                    skillId = data.skillId,
+                    skillId = 1L, // Temporary - will be replaced with actual skill ID lookup
                     gradeLevel = data.gradeLevel,
                     prompt = data.prompt,
                     hints = data.hints.joinToString("|"),
                     type = "comprehension",
-                    difficulty = "MEDIUM",
+                    difficulty = 0.5f,
                     correctAnswer = "Student's thoughtful response",
                     explanation = "Good readers think about what they read and can explain their thinking.",
                     followUpQuestions = listOf(

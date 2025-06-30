@@ -234,7 +234,7 @@ class DataSyncWorker @AssistedInject constructor(
                 val questionsResponse = apiService.getQuestionsForGrade(gradeLevel)
                 if (questionsResponse.isSuccessful) {
                     questionsResponse.body()?.forEach { remoteQuestion ->
-                        val localQuestion = questionDao.getQuestionById(remoteQuestion.id)
+                        val localQuestion = questionDao.getQuestionById(remoteQuestion.id.toLongOrNull() ?: 0L)
                         if (localQuestion == null) {
                             questionDao.insertQuestion(remoteQuestion.toEntity())
                         }

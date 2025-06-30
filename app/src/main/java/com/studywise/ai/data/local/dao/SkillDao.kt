@@ -14,13 +14,22 @@ interface SkillDao {
     suspend fun insertSkills(skills: List<SkillEntity>)
 
     @Query("SELECT * FROM skills WHERE id = :skillId")
-    suspend fun getSkillById(skillId: String): SkillEntity?
+    suspend fun getSkillById(skillId: Long): SkillEntity?
+    
+    @Query("SELECT * FROM skills WHERE code = :skillCode")
+    suspend fun getSkillByCode(skillCode: String): SkillEntity?
 
     @Query("SELECT * FROM skills WHERE category = :category ORDER BY orderIndex")
     fun getSkillsByCategory(category: SkillCategory): Flow<List<SkillEntity>>
+    
+    @Query("SELECT * FROM skills WHERE category = :category ORDER BY orderIndex")
+    suspend fun getSkillsByCategorySuspend(category: String): List<SkillEntity>
 
     @Query("SELECT * FROM skills ORDER BY category, orderIndex")
-    fun getAllSkills(): Flow<List<SkillEntity>>
+    fun getAllSkillsFlow(): Flow<List<SkillEntity>>
+    
+    @Query("SELECT * FROM skills ORDER BY category, orderIndex")
+    suspend fun getAllSkills(): List<SkillEntity>
 
     @Query("SELECT COUNT(*) FROM skills")
     suspend fun getSkillCount(): Int

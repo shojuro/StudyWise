@@ -23,7 +23,12 @@
       "Bash(powershell.exe:*)",
       "Bash($env:JAVA_HOME = \"C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.15.6-hotspot\")",
       "Bash(whereis:*)",
-      "Bash(git clean:*)"
+      "Bash(git clean:*)",
+      "Bash(/mnt/c/Windows/System32/cmd.exe /c \"cd C:\\\\DEV\\\\StudyWise-Fresh && gradlew.bat clean assembleDebug\")",
+      "Bash(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"Get-Location\")",
+      "Bash(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \".\\gradlew.bat clean assembleDebug\" 2 >& 1)",
+      "Bash(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \".\\gradlew.bat clean compileDebugKotlin\" 2 >& 1)",
+      "Bash(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \".\\gradlew.bat clean assembleDebug\")"
     ],
     "deny": []
   }

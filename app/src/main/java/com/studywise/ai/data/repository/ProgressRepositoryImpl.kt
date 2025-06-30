@@ -3,8 +3,10 @@ package com.studywise.ai.data.repository
 import com.studywise.ai.data.local.dao.LearningSessionDao
 import com.studywise.ai.data.local.dao.ProgressDao
 import com.studywise.ai.data.local.dao.SkillDao
+import com.studywise.ai.data.local.dao.StudentSkillMasteryDao
 import com.studywise.ai.data.local.dao.UserDao
 import com.studywise.ai.data.local.entity.SessionStatus
+import com.studywise.ai.data.local.entity.StudentSkillMasteryEntity
 import com.studywise.ai.domain.model.*
 import com.studywise.ai.domain.repository.ProgressRepository
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +23,8 @@ class ProgressRepositoryImpl @Inject constructor(
     private val progressDao: ProgressDao,
     private val sessionDao: LearningSessionDao,
     private val userDao: UserDao,
-    private val skillDao: SkillDao
+    private val skillDao: SkillDao,
+    private val studentSkillMasteryDao: StudentSkillMasteryDao
 ) : ProgressRepository {
 
     override suspend fun getWeeklyProgress(userId: String, weekOffset: Int): Result<WeeklyProgress> {
@@ -184,7 +187,7 @@ class ProgressRepositoryImpl @Inject constructor(
             Result.success(
                 SkillProgress(
                     skillId = skillId,
-                    skillName = skillDao.getSkillById(skillId)?.name ?: "Unknown Skill",
+                    skillName = skillDao.getSkillById(skillId.toLongOrNull() ?: 0L)?.name ?: "Unknown Skill",
                     currentLevel = (latestProgress.masteryLevel * 10).roundToInt(),
                     progress = latestProgress.masteryLevel,
                     questionsAnswered = totalQuestions,
@@ -690,4 +693,17 @@ class ProgressRepositoryImpl @Inject constructor(
         val subjectsExplored: Int,
         val highestAccuracy: Float
     )
+    
+    // Add missing helper methods for analytics
+    suspend fun getCurrentStreak(studentId: String): Int {
+        return getDailyStreak(studentId).getOrDefault(0)
+    }
+    
+    suspend fun getTotalPoints(studentId: String): Int {
+        return getTotalPoints(studentId).getOrDefault(0)
+    }
+    
+    fun getProgressByStudent(studentId: String): Flow<List<StudentSkillMasteryEntity>> {
+        return studentSkillMasteryDao.getMasteryByStudent(studentId)
+    }
 }

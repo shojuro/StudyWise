@@ -3,7 +3,7 @@ package com.studywise.ai
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import com.studywise.ai.data.local.DatabaseInitializer
+import com.studywise.ai.data.local.DatabaseInitializerV2
 import com.studywise.ai.data.sync.SyncManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +23,7 @@ class StudyWiseApp : Application(), Configuration.Provider {
     lateinit var syncManager: SyncManager
     
     @Inject
-    lateinit var databaseInitializer: DatabaseInitializer
+    lateinit var databaseInitializer: DatabaseInitializerV2
     
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     

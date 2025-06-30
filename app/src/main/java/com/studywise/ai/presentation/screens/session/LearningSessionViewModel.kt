@@ -440,12 +440,15 @@ class LearningSessionViewModel @Inject constructor(
 
     private fun createFallbackQuestion(): Question {
         // Create grade-appropriate fallback questions based on subject
+        val userGrade = 6 // Default grade for MVP
         return when (subject) {
             "English" -> Question(
                 id = UUID.randomUUID().toString(),
-                text = "Based on the text you provided, what is the main idea being communicated?",
+                skillId = "main_idea_identification",
+                gradeLevel = userGrade,
+                prompt = "Based on the text you provided, what is the main idea being communicated?",
                 type = "comprehension",
-                difficulty = QuestionDifficulty.MEDIUM,
+                difficulty = 0.5f,
                 hints = listOf(
                     "Look for the topic that appears most frequently",
                     "What is the author trying to tell you?"
@@ -455,9 +458,11 @@ class LearningSessionViewModel @Inject constructor(
             )
             "Mathematics" -> Question(
                 id = UUID.randomUUID().toString(),
-                text = "If you have 3 groups of 4 items each, how many items do you have in total?",
+                skillId = "multiplication_basics",
+                gradeLevel = userGrade,
+                prompt = "If you have 3 groups of 4 items each, how many items do you have in total?",
                 type = "multiplication",
-                difficulty = QuestionDifficulty.EASY,
+                difficulty = 0.3f,
                 hints = listOf(
                     "Think of it as adding 4 + 4 + 4",
                     "This is the same as 3 × 4"
@@ -467,9 +472,11 @@ class LearningSessionViewModel @Inject constructor(
             )
             else -> Question(
                 id = UUID.randomUUID().toString(),
-                text = "What would you like to learn more about from your reading?",
+                skillId = "general_reflection",
+                gradeLevel = userGrade,
+                prompt = "What would you like to learn more about from your reading?",
                 type = "reflection",
-                difficulty = QuestionDifficulty.EASY,
+                difficulty = 0.3f,
                 hints = listOf("Think about what interested you most"),
                 correctAnswer = "Varies based on student interest",
                 explanation = "Curiosity drives learning!"

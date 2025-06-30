@@ -70,4 +70,22 @@ object DatabaseModule {
     fun provideQuestionResponseDao(database: StudyWiseDatabase): QuestionResponseDao {
         return database.questionResponseDao()
     }
+    
+    @Provides
+    @Singleton
+    fun provideSkillProgressionDao(database: StudyWiseDatabase): SkillProgressionDao {
+        return database.skillProgressionDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideContentTemplateDao(database: StudyWiseDatabase): ContentTemplateDao {
+        return database.contentTemplateDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideStudentSkillMasteryDao(database: StudyWiseDatabase): StudentSkillMasteryDao {
+        return database.studentSkillMasteryDao()
+    }
 }
