@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -34,6 +36,8 @@ import com.studywise.ai.presentation.components.session.InputMethodSelector
 import com.studywise.ai.presentation.components.session.VoiceInputDisplay
 import com.studywise.ai.presentation.theme.*
 import com.studywise.ai.util.textextraction.InputMethod
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 /**
  * Enhanced learning session screen with comprehensive educational content features
@@ -56,17 +60,18 @@ fun EnhancedLearningSessionScreen(
                 onNavigateBack = onNavigateBack
             )
         },
-        containerColor = AppColors.Background
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            val currentError = uiState.error
             when {
-                uiState.error != null -> {
+                currentError != null -> {
                     ErrorContent(
-                        error = uiState.error,
+                        error = currentError,
                         onRetry = { viewModel.retrySession() }
                     )
                 }
@@ -551,7 +556,8 @@ private fun FollowUpQuestionSection(
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 colors = OutlinedTextFieldDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                     focusedBorderColor = MaterialTheme.colorScheme.tertiary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)
                 )
@@ -869,6 +875,225 @@ private fun ErrorContent(
         
         Button(onClick = onRetry) {
             Text("Try Again")
+        }
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun BookTextInputContent(
+    uiState: EnhancedLearningSessionUiState,
+    onBookTextChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onInputMethodSelected: (InputMethod) -> Unit,
+    onPhotoSelected: (android.net.Uri) -> Unit,
+    onDocumentSelected: (android.net.Uri) -> Unit,
+    onStartVoiceCapture: () -> Unit,
+    onStopVoiceCapture: () -> Unit
+) {
+    // Permission states
+    val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
+    val audioPermissionState = rememberPermissionState(android.Manifest.permission.RECORD_AUDIO)
+    
+    // Launchers for photo and document selection
+    val photoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let { onPhotoSelected(it) }
+    }
+    
+    val documentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let { onDocumentSelected(it) }
+    }
+    
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            // Handle camera capture
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Icon(
+            imageVector = Icons.Outlined.Book,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Let's Start Learning!",
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Choose how to input your study material:",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Input method selector
+        InputMethodSelector(
+            selectedMethod = uiState.selectedInputMethod,
+            onMethodSelected = { method ->
+                onInputMethodSelected(method)
+                when (method) {
+                    InputMethod.CAMERA -> {
+                        if (cameraPermissionState.status.isGranted) {
+                            photoLauncher.launch("image/*")
+                        } else {
+                            cameraPermissionState.launchPermissionRequest()
+                        }
+                    }
+                    InputMethod.DOCUMENT -> {
+                        documentLauncher.launch("*/*")
+                    }
+                    InputMethod.VOICE -> {
+                        if (audioPermissionState.status.isGranted) {
+                            onStartVoiceCapture()
+                        } else {
+                            audioPermissionState.launchPermissionRequest()
+                        }
+                    }
+                    else -> {}
+                }
+            },
+            isProcessing = uiState.isProcessingInput
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Show appropriate input UI based on selected method
+        when (uiState.selectedInputMethod) {
+            InputMethod.TEXT -> {
+                OutlinedTextField(
+                    value = uiState.bookText,
+                    onValueChange = onBookTextChange,
+                    label = { Text("Your book text") },
+                    placeholder = { Text("Type or paste at least 50 characters...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    enabled = !uiState.isLoading && !uiState.isProcessingInput,
+                    isError = uiState.bookTextError != null,
+                    supportingText = uiState.bookTextError?.let { { Text(it) } },
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { onSubmit() }
+                    ),
+                    maxLines = 10
+                )
+            }
+            InputMethod.VOICE -> {
+                VoiceInputDisplay(
+                    voiceState = uiState.voiceState,
+                    transcribedText = uiState.bookText,
+                    onStop = onStopVoiceCapture
+                )
+            }
+            else -> {
+                // For CAMERA and DOCUMENT, show the extracted text preview
+                if (uiState.bookText.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Text(
+                                    text = "Extracted Text",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                TextButton(
+                                    onClick = { onBookTextChange("") },
+                                    enabled = !uiState.isProcessingInput
+                                ) {
+                                    Text("Clear")
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = uiState.bookText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 10
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Processing indicator
+        if (uiState.isProcessingInput) {
+            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Processing...",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        AccessibleButton(
+            onClick = onSubmit,
+            text = "Start Session",
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoading && 
+                     !uiState.isProcessingInput && 
+                     uiState.bookText.isNotBlank(),
+            isLoading = uiState.isLoading
+        )
+        
+        // Error message
+        uiState.bookTextError?.let { error ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(12.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }

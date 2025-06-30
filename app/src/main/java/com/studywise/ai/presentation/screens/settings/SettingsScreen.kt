@@ -252,7 +252,7 @@ fun SettingsScreen(
 
     if (uiState.showReminderTimeDialog) {
         ReminderTimePickerDialog(
-            currentTime = uiState.reminderTime,
+            currentTime = uiState.studyReminderTime ?: "09:00",
             onTimeSelected = { hour, minute ->
                 viewModel.updateReminderTime(hour, minute)
                 viewModel.dismissReminderTimeDialog()

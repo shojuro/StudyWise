@@ -72,6 +72,26 @@ class PromptExpansionService @Inject constructor(
             "speed_challenge",
             "rapid_fire"
         )
+        
+        // Constants for variable options
+        private val TEXT_TYPE_OPTIONS = listOf(
+            "your text", "this passage", "the article", "this section",
+            "your reading", "the story", "the information", "what you've read"
+        )
+        
+        private val ACTION_VERBS = listOf(
+            "identify", "find", "locate", "discover", "analyze", "examine",
+            "evaluate", "assess", "compare", "contrast", "explain", "describe"
+        )
+        
+        private val NUMBER_OPTIONS = listOf(
+            "two", "three", "four", "several", "multiple"
+        )
+        
+        private val COGNITIVE_DESCRIPTORS = listOf(
+            "main", "central", "key", "primary", "important", "significant",
+            "essential", "fundamental", "critical"
+        )
     }
     
     private val templateProcessor = TemplateProcessor()
@@ -438,14 +458,23 @@ class PromptExpansionService @Inject constructor(
         return ContentTemplateEntity(
             id = 0, // Will be auto-generated
             skillId = skill.id,
-            title = "${skill.name} - ${strategy.replace("_", " ").uppercase()} #${variationIndex + 1}",
-            content = adjustedPrompt,
-            difficulty = calculateDifficultyForVariation(strategy, gradeLevel),
-            gradeLevel = gradeLevel,
+            templatePattern = adjustedPrompt,
             templateType = mapStrategyToTemplateType(strategy),
-            variables = extractVariablesFromPrompt(adjustedPrompt),
+            gradeLevel = gradeLevel,
+            variables = "[]", // Empty variables for now
             constraints = generateConstraintsForStrategy(strategy, gradeLevel),
-            metadata = generateVariationMetadata(strategy, skill, gradeLevel)
+            difficultyLevel = when (calculateDifficultyForVariation(strategy, gradeLevel)) {
+                in 0f..0.33f -> "low"
+                in 0.33f..0.66f -> "medium"
+                in 0.66f..0.9f -> "high"
+                else -> "advanced"
+            },
+            contextType = "educational",
+            scaffoldingLevel = when (strategy) {
+                "scaffolding_variation" -> "high_support"
+                "metacognitive_focus" -> "low_support"
+                else -> "medium_support"
+            }
         )
     }
     
@@ -621,26 +650,4 @@ class PromptExpansionService @Inject constructor(
         val type: String,
         val options: List<String>
     )
-    
-    // Constants for variable options
-    companion object Options {
-        private val TEXT_TYPE_OPTIONS = listOf(
-            "your text", "this passage", "the article", "this section",
-            "your reading", "the story", "the information", "what you've read"
-        )
-        
-        private val ACTION_VERBS = listOf(
-            "identify", "find", "locate", "discover", "analyze", "examine",
-            "evaluate", "assess", "compare", "contrast", "explain", "describe"
-        )
-        
-        private val NUMBER_OPTIONS = listOf(
-            "two", "three", "four", "several", "multiple"
-        )
-        
-        private val COGNITIVE_DESCRIPTORS = listOf(
-            "main", "central", "key", "primary", "important", "significant",
-            "essential", "fundamental", "critical"
-        )
-    }
 }

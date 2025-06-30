@@ -148,6 +148,11 @@ class SettingsViewModel @Inject constructor(
         }
     }
     
+    fun updateReminderTime(hour: Int, minute: Int) {
+        val time = String.format("%02d:%02d", hour, minute)
+        onStudyReminderTimeChange(time)
+    }
+    
     fun showThemeDialog() {
         _uiState.value = _uiState.value.copy(showThemeDialog = true)
     }

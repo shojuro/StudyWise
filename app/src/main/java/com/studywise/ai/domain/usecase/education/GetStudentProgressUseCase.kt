@@ -1,6 +1,7 @@
 package com.studywise.ai.domain.usecase.education
 
 import com.studywise.ai.domain.repository.ProgressRepository
+import com.studywise.ai.domain.repository.EducationalContentRepository
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -8,19 +9,20 @@ import javax.inject.Inject
  * Use case for fetching overall student progress
  */
 class GetStudentProgressUseCase @Inject constructor(
-    private val progressRepository: ProgressRepository
+    private val progressRepository: ProgressRepository,
+    private val educationalContentRepository: EducationalContentRepository
 ) {
     suspend operator fun invoke(studentId: String): Result<StudentProgress> {
         return try {
-            val allProgress = progressRepository.getProgressByStudent(studentId).first()
+            val allProgress = educationalContentRepository.getStudentProgress(studentId).getOrThrow()
             val skillsMastered = allProgress.count { it.masteryLevel >= 0.8f }
             val overallCompletion = if (allProgress.isNotEmpty()) {
                 allProgress.map { it.masteryLevel }.average().toFloat()
             } else 0f
             
             // Get streak from user stats (simplified)
-            val currentStreak = progressRepository.getCurrentStreak(studentId)
-            val totalPoints = progressRepository.getTotalPoints(studentId)
+            val currentStreak = progressRepository.getDailyStreak(studentId).getOrDefault(0)
+            val totalPoints = progressRepository.getTotalPoints(studentId).getOrDefault(0)
             
             Result.success(
                 StudentProgress(

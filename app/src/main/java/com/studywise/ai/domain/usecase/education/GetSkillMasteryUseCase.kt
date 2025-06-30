@@ -14,8 +14,8 @@ class GetSkillMasteryUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(studentId: String): Result<List<SkillMasteryInfo>> {
         return try {
-            val masteryData = studentSkillMasteryDao.getMasteryByStudent(studentId).first()
-            val skills = skillDao.getAllSkills().first()
+            val masteryData = studentSkillMasteryDao.observeStudentMasteries(studentId).first()
+            val skills = skillDao.getAllSkills()
             
             val skillMasteryInfo = masteryData.map { mastery ->
                 val skill = skills.find { it.id == mastery.skillId }
@@ -24,9 +24,9 @@ class GetSkillMasteryUseCase @Inject constructor(
                     skillName = skill?.name ?: "Unknown Skill",
                     skillCode = skill?.code ?: "",
                     masteryLevel = mastery.masteryLevel,
-                    questionsAnswered = mastery.questionsAnswered,
-                    correctAnswers = mastery.correctAnswers,
-                    lastPracticed = mastery.lastPracticed,
+                    questionsAnswered = mastery.totalAttempts,
+                    correctAnswers = mastery.successfulAttempts,
+                    lastPracticed = mastery.lastPracticed?.time ?: 0L,
                     recentImprovement = calculateRecentImprovement(mastery)
                 )
             }
@@ -39,8 +39,8 @@ class GetSkillMasteryUseCase @Inject constructor(
     
     private fun calculateRecentImprovement(mastery: com.studywise.ai.data.local.entity.StudentSkillMasteryEntity): Float {
         // In production, this would compare with historical data
-        val recentAccuracy = if (mastery.questionsAnswered > 0) {
-            mastery.correctAnswers.toFloat() / mastery.questionsAnswered
+        val recentAccuracy = if (mastery.totalAttempts > 0) {
+            mastery.successfulAttempts.toFloat() / mastery.totalAttempts
         } else 0f
         
         // Simplified calculation - would track actual improvement over time

@@ -3,6 +3,7 @@ package com.studywise.ai.presentation.screens.progress
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.studywise.ai.data.local.preferences.PreferencesManager
+import com.studywise.ai.domain.model.SubjectProgress
 import com.studywise.ai.domain.repository.ProgressRepository
 import com.studywise.ai.domain.service.AnalyticsService
 import com.studywise.ai.domain.service.trackSubjectProgressViewed
@@ -10,10 +11,8 @@ import com.studywise.ai.domain.service.trackProgressExported
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.JsonArray
+import org.json.JSONObject
+import org.json.JSONArray
 import java.io.File
 import java.io.FileWriter
 import java.text.SimpleDateFormat
@@ -230,32 +229,40 @@ class SubjectProgressDetailViewModel @Inject constructor(
         val currentState = _uiState.value
         val subjectProgress = currentState.subjectProgress ?: return
         
-        val jsonContent = JsonObject(mapOf(
-            "subject" to JsonPrimitive(subjectProgress.subject),
-            "totalSessions" to JsonPrimitive(subjectProgress.totalSessions),
-            "totalQuestions" to JsonPrimitive(subjectProgress.totalQuestions),
-            "correctAnswers" to JsonPrimitive(subjectProgress.correctAnswers),
-            "averageAccuracy" to JsonPrimitive(subjectProgress.averageAccuracy),
-            "totalTimeMinutes" to JsonPrimitive(subjectProgress.totalTimeMinutes),
-            "lastPracticed" to JsonPrimitive(subjectProgress.lastPracticed?.toString() ?: "null"),
-            "skillMastery" to JsonObject(
-                subjectProgress.skillMastery.mapValues { JsonPrimitive(it.value) }
-            ),
-            "sessionHistory" to JsonArray(
-                currentState.sessionHistory.map { session ->
-                    JsonObject(mapOf(
-                        "date" to JsonPrimitive(session.date.toString()),
-                        "accuracy" to JsonPrimitive(session.accuracy),
-                        "minutesSpent" to JsonPrimitive(session.minutesSpent),
-                        "pointsEarned" to JsonPrimitive(session.pointsEarned),
-                        "questionsAnswered" to JsonPrimitive(session.questionsAnswered)
-                    ))
+        val jsonContent = JSONObject().apply {
+            put("subject", subjectProgress.subject)
+            put("totalSessions", subjectProgress.totalSessions)
+            put("totalQuestions", subjectProgress.totalQuestions)
+            put("correctAnswers", subjectProgress.correctAnswers)
+            put("averageAccuracy", subjectProgress.averageAccuracy)
+            put("totalTimeMinutes", subjectProgress.totalTimeMinutes)
+            put("lastPracticed", subjectProgress.lastPracticed?.toString() ?: "null")
+            
+            val skillMasteryJson = JSONObject()
+            subjectProgress.skillMastery.forEach { (skill, mastery) ->
+                skillMasteryJson.put(skill, mastery)
+            }
+            put("skillMastery", skillMasteryJson)
+            
+            val sessionHistoryArray = JSONArray()
+            currentState.sessionHistory.forEach { session ->
+                val sessionJson = JSONObject().apply {
+                    put("date", session.date.toString())
+                    put("accuracy", session.accuracy)
+                    put("minutesSpent", session.minutesSpent)
+                    put("pointsEarned", session.pointsEarned)
+                    put("questionsAnswered", session.questionsAnswered)
                 }
-            ),
-            "recommendations" to JsonArray(
-                currentState.recommendations.map { JsonPrimitive(it) }
-            )
-        ))
+                sessionHistoryArray.put(sessionJson)
+            }
+            put("sessionHistory", sessionHistoryArray)
+            
+            val recommendationsArray = JSONArray()
+            currentState.recommendations.forEach { rec ->
+                recommendationsArray.put(rec)
+            }
+            put("recommendations", recommendationsArray)
+        }
         
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault())
         val fileName = "progress_${subjectProgress.subject}_${dateFormatter.format(Date())}.json"

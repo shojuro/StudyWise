@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.studywise.ai.presentation.components.animations.*
+import com.studywise.ai.domain.gamification.Achievement
+import com.studywise.ai.domain.gamification.AchievementRarity
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.*
@@ -67,19 +69,20 @@ fun StudentAnalyticsDashboard(
             )
         }
     ) { paddingValues ->
-        when (analyticsState) {
+        val currentState = analyticsState
+        when (currentState) {
             is AnalyticsState.Loading -> {
                 LoadingState(modifier = Modifier.padding(paddingValues))
             }
             is AnalyticsState.Success -> {
                 AnalyticsDashboardContent(
-                    data = analyticsState.data,
+                    data = currentState.data,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
             is AnalyticsState.Error -> {
                 ErrorState(
-                    message = analyticsState.message,
+                    message = currentState.message,
                     onRetry = viewModel::refreshAnalytics,
                     modifier = Modifier.padding(paddingValues)
                 )
@@ -665,8 +668,8 @@ private fun AchievementsShowcase(achievements: List<Achievement>) {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(achievements) { achievement ->
-                    AchievementBadge(achievement)
+                items(achievements.size) { index ->
+                    AchievementBadge(achievements[index])
                 }
             }
         }

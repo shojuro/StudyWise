@@ -21,6 +21,9 @@ interface QuestionDao {
     @Query("SELECT * FROM questions WHERE skillId = :skillId AND gradeLevel = :gradeLevel")
     suspend fun getQuestionsForSkillAndGrade(skillId: Long, gradeLevel: Int): List<QuestionEntity>
 
+    @Query("SELECT * FROM questions WHERE skillId = :skillId")
+    suspend fun getQuestionsBySkill(skillId: Long): List<QuestionEntity>
+
     @Query("SELECT * FROM questions WHERE gradeLevel = :gradeLevel")
     fun getQuestionsByGrade(gradeLevel: Int): Flow<List<QuestionEntity>>
 

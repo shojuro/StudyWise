@@ -177,7 +177,7 @@ class BatchPromptGenerationManager @Inject constructor(
             val basePrompt = EducationalContentData.getSkillPromptForGrade(
                 skill.code,
                 gradeLevel
-            ) ?: return Result.failure(
+            ) ?: return@withContext Result.failure(
                 Exception("No base prompt found for ${skill.code} grade $gradeLevel")
             )
             

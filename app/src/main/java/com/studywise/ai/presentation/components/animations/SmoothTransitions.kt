@@ -2,6 +2,9 @@ package com.studywise.ai.presentation.components.animations
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -257,6 +260,7 @@ fun BounceAnimation(
 /**
  * Number counter animation
  */
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AnimatedCounter(
     count: Int,
@@ -423,7 +427,3 @@ fun AnimatedFloatingActionButton(
         content()
     }
 }
-
-// Helper imports needed
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource

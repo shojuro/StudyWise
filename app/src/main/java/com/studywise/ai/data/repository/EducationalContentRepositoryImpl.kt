@@ -225,12 +225,12 @@ class EducationalContentRepositoryImpl @Inject constructor(
                     "advanced" -> 0.9f
                     else -> 0.5f
                 },
-                metadata = mapOf(
-                    "templateId" to templateId.toString(),
-                    "templateType" to template.templateType,
-                    "contextType" to (template.contextType ?: "general"),
-                    "scaffoldingLevel" to (template.scaffoldingLevel ?: "independent")
-                )
+                metadata = JSONObject().apply {
+                    put("templateId", templateId.toString())
+                    put("templateType", template.templateType)
+                    put("contextType", template.contextType ?: "general")
+                    put("scaffoldingLevel", template.scaffoldingLevel ?: "independent")
+                }.toString()
             )
             
             Result.success(question)
@@ -451,11 +451,11 @@ class EducationalContentRepositoryImpl @Inject constructor(
                 "advanced" -> 0.9f
                 else -> 0.5f
             },
-            metadata = mapOf(
-                "templateId" to template.id.toString(),
-                "templateType" to template.templateType,
-                "generatedAt" to System.currentTimeMillis().toString()
-            )
+            metadata = JSONObject().apply {
+                put("templateId", template.id.toString())
+                put("templateType", template.templateType)
+                put("generatedAt", System.currentTimeMillis().toString())
+            }.toString()
         )
     }
     

@@ -150,6 +150,62 @@ class SkillProgressionManager @Inject constructor(
     }
     
     /**
+     * Select the next skill for a learning session
+     */
+    suspend fun selectNextSkill(
+        studentId: String,
+        gradeLevel: Int,
+        availableSkills: List<SkillEntity>,
+        sessionType: String
+    ): Result<SkillEntity> {
+        return try {
+            // Get student's mastery data
+            val studentProgress = educationalContentRepository.getStudentProgress(studentId).getOrThrow()
+            val masteryMap = studentProgress.associateBy { it.skillId }
+            
+            // Filter skills by grade level and readiness
+            val eligibleSkills = availableSkills.filter { skill ->
+                // Check if student is ready for this skill
+                val prerequisites = educationalContentRepository.getPrerequisiteSkills(skill.id).getOrNull() ?: emptyList()
+                val isReady = prerequisites.all { prereq ->
+                    (masteryMap[prereq.id]?.masteryLevel ?: 0f) >= 0.7f
+                }
+                isReady
+            }
+            
+            if (eligibleSkills.isEmpty()) {
+                return Result.failure(Exception("No eligible skills found"))
+            }
+            
+            // Select based on session type and mastery
+            val selectedSkill = when (sessionType) {
+                "review" -> {
+                    // Select skills with lower mastery for review
+                    eligibleSkills.minByOrNull { skill ->
+                        masteryMap[skill.id]?.masteryLevel ?: 0f
+                    }
+                }
+                "challenge" -> {
+                    // Select skills with higher mastery for challenge
+                    eligibleSkills.filter { skill ->
+                        (masteryMap[skill.id]?.masteryLevel ?: 0f) >= 0.6f
+                    }.randomOrNull()
+                }
+                else -> {
+                    // Regular practice - select skills with medium mastery
+                    eligibleSkills.sortedBy { skill ->
+                        kotlin.math.abs((masteryMap[skill.id]?.masteryLevel ?: 0f) - 0.5f)
+                    }.firstOrNull()
+                }
+            } ?: eligibleSkills.first()
+            
+            Result.success(selectedSkill)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
      * Get student's mastery level for a specific skill
      */
     suspend fun getSkillMasteryLevel(

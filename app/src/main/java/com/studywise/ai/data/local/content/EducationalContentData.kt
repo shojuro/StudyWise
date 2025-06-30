@@ -559,13 +559,6 @@ object EducationalContentData {
     }
     
     /**
-     * Get all skills for a specific category
-     */
-    fun getSkillsByCategory(category: String): List<SkillData> {
-        return allSkills.filter { it.category == category }
-    }
-    
-    /**
      * Check if a grade level has prompts
      */
     fun hasPromptsForGrade(gradeLevel: Int): Boolean {

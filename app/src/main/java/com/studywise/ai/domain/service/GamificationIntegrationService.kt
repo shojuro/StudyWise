@@ -2,6 +2,7 @@ package com.studywise.ai.domain.service
 
 import com.studywise.ai.domain.gamification.*
 import com.studywise.ai.domain.model.Question
+import com.studywise.ai.domain.model.AnalyticsEvent
 import com.studywise.ai.data.local.entity.SkillEntity
 import com.studywise.ai.data.local.entity.StudentSkillMasteryEntity
 import com.studywise.ai.presentation.screens.session.AnswerEvaluation
@@ -54,10 +55,13 @@ class GamificationIntegrationService @Inject constructor(
         
         // Log the psychological hooks for the session
         analyticsService.logEvent(
-            AnalyticsEvent.GamificationApplied(
-                userId = userId,
-                strategy = "fence_painting",
-                hooks = fencePaintingResult.psychologicalHooks
+            AnalyticsEvent.CustomEvent(
+                eventName = "gamification_applied",
+                parameters = mapOf(
+                    "user_id" to userId,
+                    "strategy" to "fence_painting",
+                    "hooks" to fencePaintingResult.psychologicalHooks.joinToString(",")
+                )
             )
         )
     }

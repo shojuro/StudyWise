@@ -699,11 +699,7 @@ class ProgressRepositoryImpl @Inject constructor(
         return getDailyStreak(studentId).getOrDefault(0)
     }
     
-    suspend fun getTotalPoints(studentId: String): Int {
-        return getTotalPoints(studentId).getOrDefault(0)
-    }
-    
     fun getProgressByStudent(studentId: String): Flow<List<StudentSkillMasteryEntity>> {
-        return studentSkillMasteryDao.getMasteryByStudent(studentId)
+        return studentSkillMasteryDao.observeStudentMasteries(studentId)
     }
 }

@@ -52,11 +52,10 @@ class AIEvaluationService @Inject constructor(
         
         try {
             // Call AI service
-            val aiResponse = aiRepository.generateResponse(
-                prompt = evaluationPrompt,
-                model = EVALUATION_MODEL,
-                temperature = TEMPERATURE,
-                maxTokens = 500
+            val aiResponse = aiRepository.generateSocraticResponse(
+                context = evaluationPrompt,
+                studentResponse = userAnswer,
+                grade = gradeLevel
             )
             
             // Parse AI response
@@ -88,11 +87,10 @@ class AIEvaluationService @Inject constructor(
         )
         
         try {
-            val aiResponse = aiRepository.generateResponse(
-                prompt = followUpPrompt,
-                model = EVALUATION_MODEL,
-                temperature = 0.5f, // Slightly higher for creativity
-                maxTokens = 300
+            val aiResponse = aiRepository.generateSocraticResponse(
+                context = followUpPrompt,
+                studentResponse = userAnswer,
+                grade = gradeLevel
             )
             
             parseFollowUpQuestions(aiResponse.getOrNull() ?: "")
@@ -458,7 +456,7 @@ enum class FollowUpType {
 }
 
 // Extension for AnalyticsEvent
-data class AnalyticsEvent {
+sealed class AnalyticsEvent {
     data class GamificationApplied(
         val userId: String,
         val strategy: String,

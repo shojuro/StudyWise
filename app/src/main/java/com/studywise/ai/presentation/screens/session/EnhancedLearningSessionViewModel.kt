@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.studywise.ai.data.local.content.QuestionSelector
-import com.studywise.ai.data.local.content.SkillProgressionManager
+import com.studywise.ai.domain.usecase.education.SkillProgressionManager
 import com.studywise.ai.data.local.dao.LearningSessionDao
 import com.studywise.ai.data.local.dao.ProgressDao
 import com.studywise.ai.data.local.entity.*
@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
+import org.json.JSONObject
 
 /**
  * Enhanced learning session that uses the comprehensive educational content system
@@ -50,6 +51,7 @@ class EnhancedLearningSessionViewModel @Inject constructor(
     private var currentSkillId: Long? = null
     private var sessionQuestions = mutableListOf<Question>()
     private var currentQuestionIndex = 0
+    private var sessionStartTime: Long = System.currentTimeMillis()
 
     init {
         _uiState.value = _uiState.value.copy(subject = subject)
@@ -60,7 +62,7 @@ class EnhancedLearningSessionViewModel @Inject constructor(
         viewModelScope.launch {
             preferencesManager.userPreferences.collect { preferences ->
                 userId = preferences.userId ?: ""
-                gradeLevel = preferences.gradeLevel ?: 6
+                gradeLevel = 6 // Default grade level, TODO: Get from user profile
                 
                 if (userId.isNotEmpty() && _uiState.value.bookText.isNotEmpty()) {
                     startEnhancedSession()
@@ -246,7 +248,7 @@ class EnhancedLearningSessionViewModel @Inject constructor(
             studentId = userId,
             gradeLevel = gradeLevel,
             availableSkills = skills,
-            sessionType = sessionType
+            sessionType = sessionType.toString()
         ).getOrNull()
         
         if (selectedSkill == null) {
@@ -260,7 +262,7 @@ class EnhancedLearningSessionViewModel @Inject constructor(
         val questions = questionSelector.selectQuestions(
             skill = selectedSkill,
             gradeLevel = gradeLevel,
-            sessionType = sessionType,
+            sessionType = sessionType.toString(),
             count = determineQuestionCount(sessionType),
             studentId = userId
         ).getOrNull() ?: emptyList()
@@ -280,7 +282,7 @@ class EnhancedLearningSessionViewModel @Inject constructor(
                     category = selectedSkill.category.name,
                     masteryLevel = masteryLevel
                 ),
-                sessionType = sessionType.name,
+                sessionType = sessionType.toString(),
                 isLoading = false
             )
             loadNextQuestion()
@@ -335,7 +337,7 @@ class EnhancedLearningSessionViewModel @Inject constructor(
                 hints = question.hints ?: emptyList(),
                 followUpQuestions = question.followUpQuestions ?: emptyList(),
                 difficulty = question.difficulty,
-                metadata = question.metadata ?: emptyMap()
+                metadata = question.metadata?.let { parseMetadata(it) } ?: emptyMap()
             ),
             userAnswer = "",
             isAnswerSubmitted = false,
@@ -480,11 +482,11 @@ class EnhancedLearningSessionViewModel @Inject constructor(
         if (mastery != null) {
             // Update existing mastery
             val updatedMastery = mastery.copy(
-                practiceCount = mastery.practiceCount + 1,
-                correctCount = mastery.correctCount + if (wasCorrect) 1 else 0,
+                totalAttempts = mastery.totalAttempts + 1,
+                successfulAttempts = mastery.successfulAttempts + if (wasCorrect) 1 else 0,
                 lastPracticed = Date(),
-                accuracyRate = ((mastery.correctCount + if (wasCorrect) 1 else 0).toFloat() / 
-                               (mastery.practiceCount + 1).toFloat())
+                accuracyRate = ((mastery.successfulAttempts + if (wasCorrect) 1 else 0).toFloat() / 
+                               (mastery.totalAttempts + 1).toFloat())
             )
             educationalContentRepository.updateStudentMastery(updatedMastery)
         } else {
@@ -495,8 +497,8 @@ class EnhancedLearningSessionViewModel @Inject constructor(
                 gradeLevel = gradeLevel,
                 masteryLevel = if (wasCorrect) 0.2f else 0.1f,
                 confidenceScore = 0.5f,
-                practiceCount = 1,
-                correctCount = if (wasCorrect) 1 else 0,
+                totalAttempts = 1,
+                successfulAttempts = if (wasCorrect) 1 else 0,
                 accuracyRate = if (wasCorrect) 1.0f else 0.0f,
                 firstPracticed = Date(),
                 lastPracticed = Date()
@@ -523,8 +525,13 @@ class EnhancedLearningSessionViewModel @Inject constructor(
                 AnalyticsEvent.SessionCompleted(
                     subject = subject,
                     userId = userId,
-                    questionsCompleted = _uiState.value.questionsCompleted,
-                    pointsEarned = _uiState.value.pointsEarned
+                    duration = System.currentTimeMillis() - sessionStartTime,
+                    questionsAnswered = _uiState.value.questionsCompleted,
+                    masteryScore = _uiState.value.questionsCompleted.let { completed ->
+                        if (_uiState.value.totalQuestions > 0) {
+                            completed.toFloat() / _uiState.value.totalQuestions
+                        } else 0f
+                    }
                 )
             )
             
@@ -623,7 +630,7 @@ class EnhancedLearningSessionViewModel @Inject constructor(
             }
             _uiState.value.currentQuestion == null -> {
                 // Try to load questions again
-                startSession()
+                startEnhancedSession()
             }
             else -> {
                 // Clear any error and continue with current question
@@ -633,6 +640,19 @@ class EnhancedLearningSessionViewModel @Inject constructor(
                     isLoading = false
                 )
             }
+        }
+    }
+    
+    private fun parseMetadata(jsonString: String): Map<String, String> {
+        return try {
+            val json = JSONObject(jsonString)
+            val map = mutableMapOf<String, String>()
+            json.keys().forEach { key ->
+                map[key] = json.getString(key)
+            }
+            map
+        } catch (e: Exception) {
+            emptyMap()
         }
     }
 }
