@@ -37,7 +37,11 @@
       "Bash(JAVA_HOME=\"/mnt/c/Program Files/Eclipse Adoptium/jdk-17.0.15.6-hotspot\" ./gradlew clean assembleDebug)",
       "Bash(\"/mnt/c/Program Files/Eclipse Adoptium/jdk-17.0.15.6-hotspot/bin/java\" -version)",
       "Bash(/mnt/c/DEV/StudyWise-Fresh/build_from_wsl.sh:*)",
-      "Bash(/mnt/c/Windows/System32/cmd.exe /c \"gradlew.bat clean assembleDebug\")"
+      "Bash(/mnt/c/Windows/System32/cmd.exe /c \"gradlew.bat clean assembleDebug\")",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)"
     ],
     "deny": []
   }
