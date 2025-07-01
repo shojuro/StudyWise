@@ -29,6 +29,7 @@ import com.studywise.ai.presentation.screens.splash.SplashScreen
 import com.studywise.ai.presentation.screens.learning.PhotoLearningScreen
 import com.studywise.ai.presentation.screens.analytics.AnalyticsScreen
 import com.studywise.ai.presentation.screens.progress.SubjectProgressDetailScreen
+import com.studywise.ai.presentation.screens.verbaljournal.VerbalJournalSessionScreen
 import com.studywise.ai.presentation.viewmodel.SharedAuthViewModel
 
 @Composable
@@ -191,6 +192,11 @@ fun StudyWiseNavigation(
                     navController.navigate(Screen.PhotoLearning.route) {
                         launchSingleTop = true
                     }
+                },
+                onNavigateToVerbalJournal = {
+                    navController.navigate(Screen.VerbalJournal.createRoute()) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -289,6 +295,19 @@ fun StudyWiseNavigation(
         composable(Screen.Analytics.route) {
             AnalyticsScreen(
                 onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        
+        composable(Screen.VerbalJournal.route) { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: ""
+            VerbalJournalSessionScreen(
+                sessionId = sessionId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSessionComplete = { completedSessionId ->
                     navController.popBackStack()
                 }
             )

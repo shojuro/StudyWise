@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ fun StudentDashboardScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToPhotoLearning: () -> Unit,
+    onNavigateToVerbalJournal: () -> Unit,
     viewModel: StudentDashboardViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -80,16 +82,29 @@ fun StudentDashboardScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNavigateToPhotoLearning,
-                icon = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = onNavigateToVerbalJournal,
+                    containerColor = MaterialTheme.colorScheme.secondary
+                ) {
                     Icon(
-                        imageVector = Icons.Default.PhotoCamera,
-                        contentDescription = "Learn from Photo"
+                        imageVector = Icons.Default.RecordVoiceOver,
+                        contentDescription = "Verbal Journal"
                     )
-                },
-                text = { Text("Learn from Photo") }
-            )
+                }
+                ExtendedFloatingActionButton(
+                    onClick = onNavigateToPhotoLearning,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.PhotoCamera,
+                            contentDescription = "Learn from Photo"
+                        )
+                    },
+                    text = { Text("Learn from Photo") }
+                )
+            }
         },
         bottomBar = {
             NavigationBar {

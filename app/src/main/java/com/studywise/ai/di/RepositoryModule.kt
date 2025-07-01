@@ -8,6 +8,7 @@ import com.studywise.ai.data.repository.ProgressRepositoryImpl
 import com.studywise.ai.data.repository.QuestionRepositoryImpl
 import com.studywise.ai.data.repository.SchoolRepositoryImpl
 import com.studywise.ai.data.repository.UserRepositoryImpl
+import com.studywise.ai.data.repository.VerbalJournalRepositoryImpl
 import com.studywise.ai.domain.repository.AIRepository
 import com.studywise.ai.domain.repository.AuthRepository
 import com.studywise.ai.domain.repository.EducationalContentRepository
@@ -15,6 +16,7 @@ import com.studywise.ai.domain.repository.ProgressRepository
 import com.studywise.ai.domain.repository.QuestionRepository
 import com.studywise.ai.domain.repository.SchoolRepository
 import com.studywise.ai.domain.repository.UserRepository
+import com.studywise.ai.domain.repository.VerbalJournalRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -66,4 +68,10 @@ abstract class RepositoryModule {
     abstract fun bindEducationalContentRepository(
         educationalContentRepositoryImpl: EducationalContentRepositoryImpl
     ): EducationalContentRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindVerbalJournalRepository(
+        verbalJournalRepositoryImpl: VerbalJournalRepositoryImpl
+    ): VerbalJournalRepository
 }

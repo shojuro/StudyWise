@@ -24,4 +24,7 @@ sealed class Screen(val route: String) {
     object TeacherDashboard : Screen("teacher_dashboard")
     object PhotoLearning : Screen("photo_learning")
     object Analytics : Screen("analytics")
+    object VerbalJournal : Screen("verbal_journal/{sessionId}") {
+        fun createRoute(sessionId: String = "") = "verbal_journal/$sessionId"
+    }
 }
