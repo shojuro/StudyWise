@@ -6,6 +6,8 @@ import com.studywise.ai.BuildConfig
 import com.studywise.ai.data.remote.api.MistralApiService
 import com.studywise.ai.data.remote.api.OpenAIService
 import com.studywise.ai.data.remote.api.StudyWiseApiService
+import com.studywise.ai.data.remote.interceptor.AuthTokenInterceptor
+import com.studywise.ai.data.remote.interceptor.TokenAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,7 +32,10 @@ object NetworkModule {
     
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(
+        authTokenInterceptor: AuthTokenInterceptor,
+        tokenAuthenticator: TokenAuthenticator
+    ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
@@ -40,6 +45,8 @@ object NetworkModule {
         }
         
         return OkHttpClient.Builder()
+            .addInterceptor(authTokenInterceptor)
+            .authenticator(tokenAuthenticator)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)

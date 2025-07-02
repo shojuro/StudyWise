@@ -121,6 +121,7 @@ dependencies {
     
     // Security
     implementation("at.favre.lib:bcrypt:0.10.2")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     
     // Accompanist
     implementation(libs.accompanist.permissions)

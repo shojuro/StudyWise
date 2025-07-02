@@ -9,6 +9,8 @@ import com.studywise.ai.domain.model.User
 import com.studywise.ai.domain.repository.AuthRepository
 import com.studywise.ai.domain.service.security.HashType
 import com.studywise.ai.domain.service.security.PasswordHashingService
+import com.studywise.ai.domain.service.security.SessionManager
+import com.studywise.ai.domain.service.security.TokenManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -23,7 +25,9 @@ class AuthRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
     private val preferencesManager: PreferencesManager,
     private val passwordHashingService: PasswordHashingService,
-    private val passwordHashMigrator: PasswordHashMigrator
+    private val passwordHashMigrator: PasswordHashMigrator,
+    private val tokenManager: TokenManager,
+    private val sessionManager: SessionManager
 ) : AuthRepository {
 
     override suspend fun login(email: String, password: String): Result<User> {
@@ -55,15 +59,30 @@ class AuthRepositoryImpl @Inject constructor(
                     // Update last login
                     userDao.updateLastLogin(userEntity.id, System.currentTimeMillis())
                     
-                    // Update session
-                    preferencesManager.updateUserSession(
+                    // Generate tokens
+                    val tokenResult = tokenManager.generateTokens(
                         userId = userEntity.id,
-                        userEmail = userEntity.email,
-                        userName = userEntity.name,
-                        userRole = userEntity.role.name
+                        role = userEntity.role.name
                     )
                     
-                    Result.success(userEntity.toDomainModel())
+                    if (tokenResult.isSuccess) {
+                        val authToken = tokenResult.getOrThrow()
+                        
+                        // Create session
+                        sessionManager.createSession(userEntity.id, authToken)
+                        
+                        // Update legacy session (for backward compatibility)
+                        preferencesManager.updateUserSession(
+                            userId = userEntity.id,
+                            userEmail = userEntity.email,
+                            userName = userEntity.name,
+                            userRole = userEntity.role.name
+                        )
+                        
+                        Result.success(userEntity.toDomainModel())
+                    } else {
+                        Result.failure(Exception("Failed to generate authentication tokens"))
+                    }
                 } else {
                     Result.failure(Exception("Invalid email or password"))
                 }
@@ -111,20 +130,40 @@ class AuthRepositoryImpl @Inject constructor(
             userDao.insertUser(userEntity)
             
             // Auto-login after registration
-            preferencesManager.updateUserSession(
+            // Generate tokens
+            val tokenResult = tokenManager.generateTokens(
                 userId = userId,
-                userEmail = email,
-                userName = name,
-                userRole = role
+                role = role
             )
-
-            Result.success(userEntity.toDomainModel())
+            
+            if (tokenResult.isSuccess) {
+                val authToken = tokenResult.getOrThrow()
+                
+                // Create session
+                sessionManager.createSession(userId, authToken)
+                
+                // Update legacy session (for backward compatibility)
+                preferencesManager.updateUserSession(
+                    userId = userId,
+                    userEmail = email,
+                    userName = name,
+                    userRole = role
+                )
+                
+                Result.success(userEntity.toDomainModel())
+            } else {
+                Result.failure(Exception("Failed to generate authentication tokens"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     override suspend fun logout() {
+        // End session and clear tokens
+        sessionManager.endSession()
+        
+        // Clear legacy session (for backward compatibility)
         preferencesManager.clearUserSession()
     }
 
