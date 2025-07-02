@@ -1,7 +1,6 @@
 package com.studywise.ai.presentation.screens.verbaljournal
 
 import android.content.Context
-import android.media.MediaRecorder
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -12,8 +11,8 @@ import com.studywise.ai.domain.repository.VerbalJournalRepository
 import com.studywise.ai.domain.service.SpeechToTextService
 import com.studywise.ai.domain.service.VerbalJournalConversationService
 import com.studywise.ai.domain.service.SpeechAnalysisService
+import com.studywise.ai.utils.AudioRecorder
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -29,7 +28,7 @@ class VerbalJournalSessionViewModel @Inject constructor(
     private val speechToTextService: SpeechToTextService,
     private val conversationService: VerbalJournalConversationService,
     private val speechAnalysisService: SpeechAnalysisService,
-    @ApplicationContext private val context: Context,
+    private val audioRecorder: AudioRecorder,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -47,7 +46,6 @@ class VerbalJournalSessionViewModel @Inject constructor(
     private var currentEntry: VerbalJournalEntry? = null
     private var userProfile: VerbalJournalProfile? = null
     private var conversationContext: ConversationContext? = null
-    private var mediaRecorder: MediaRecorder? = null
     private var currentAudioFile: File? = null
     private var recordingStartTime: Long = 0
     
@@ -74,7 +72,11 @@ class VerbalJournalSessionViewModel @Inject constructor(
                 
                 // Get or create user profile
                 userProfile = verbalJournalRepository.getUserProfile(currentUser.id)
-                    ?: createDefaultProfile(currentUser.id)
+                if (userProfile == null) {
+                    userProfile = createDefaultProfile(currentUser.id)
+                    // Wait for profile to be created
+                    delay(100)
+                }
                 
                 // Check if this is a new session or resuming
                 if (sessionId.isNotEmpty()) {
@@ -204,57 +206,39 @@ class VerbalJournalSessionViewModel @Inject constructor(
     }
     
     private fun startRecording() {
-        try {
-            // Create audio file
-            val audioDir = File(context.cacheDir, "verbal_journal_audio")
-            audioDir.mkdirs()
-            currentAudioFile = File(audioDir, "${UUID.randomUUID()}.m4a")
-            
-            // Initialize MediaRecorder
-            mediaRecorder = MediaRecorder().apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setAudioSamplingRate(44100)
-                setAudioEncodingBitRate(128000)
-                setOutputFile(currentAudioFile?.absolutePath)
-                prepare()
-                start()
+        recordingStartTime = System.currentTimeMillis()
+        
+        audioRecorder.startRecording().fold(
+            onSuccess = {
+                _recordingState.value = RecordingState.RECORDING
+                // Start recording timer
+                startRecordingTimer()
+            },
+            onFailure = { e ->
+                _uiState.update { 
+                    it.copy(error = "Failed to start recording: ${e.message}")
+                }
             }
-            
-            recordingStartTime = System.currentTimeMillis()
-            _recordingState.value = RecordingState.RECORDING
-            
-            // Start recording timer
-            startRecordingTimer()
-            
-        } catch (e: Exception) {
-            _uiState.update { 
-                it.copy(error = "Failed to start recording: ${e.message}")
-            }
-        }
+        )
     }
     
     private fun stopRecording() {
-        try {
-            mediaRecorder?.apply {
-                stop()
-                release()
+        val recordingDuration = (System.currentTimeMillis() - recordingStartTime) / 1000f
+        
+        audioRecorder.stopRecording().fold(
+            onSuccess = { audioFile ->
+                currentAudioFile = audioFile
+                _recordingState.value = RecordingState.PROCESSING
+                // Process the audio
+                processRecordedAudio(audioFile, recordingDuration)
+            },
+            onFailure = { e ->
+                _uiState.update { 
+                    it.copy(error = "Failed to stop recording: ${e.message}")
+                }
+                _recordingState.value = RecordingState.IDLE
             }
-            mediaRecorder = null
-            
-            val recordingDuration = (System.currentTimeMillis() - recordingStartTime) / 1000f
-            _recordingState.value = RecordingState.PROCESSING
-            
-            // Process the audio
-            processRecordedAudio(currentAudioFile!!, recordingDuration)
-            
-        } catch (e: Exception) {
-            _uiState.update { 
-                it.copy(error = "Failed to stop recording: ${e.message}")
-            }
-            _recordingState.value = RecordingState.IDLE
-        }
+        )
     }
     
     private fun processRecordedAudio(audioFile: File, durationSeconds: Float) {
@@ -641,7 +625,7 @@ class VerbalJournalSessionViewModel @Inject constructor(
     
     override fun onCleared() {
         super.onCleared()
-        mediaRecorder?.release()
+        audioRecorder.release()
         // Clean up any temporary audio files
     }
 }

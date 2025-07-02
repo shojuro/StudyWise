@@ -2,6 +2,7 @@ package com.studywise.ai.domain.repository
 
 import com.studywise.ai.domain.model.User
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 interface AuthRepository {
     suspend fun login(email: String, password: String): Result<User>
@@ -11,7 +12,8 @@ interface AuthRepository {
         password: String,
         role: String,
         grade: Int? = null,
-        parentId: String? = null
+        parentId: String? = null,
+        birthDate: LocalDate? = null
     ): Result<User>
     suspend fun logout()
     suspend fun getCurrentUser(): User?

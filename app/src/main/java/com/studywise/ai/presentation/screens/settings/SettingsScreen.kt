@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.studywise.ai.data.local.preferences.ThemeMode
 import com.studywise.ai.presentation.components.AccessibleButton
+import com.studywise.ai.presentation.components.NetworkStateCard
+import com.studywise.ai.presentation.components.SyncStatusCard
 import kotlinx.coroutines.delay
 import java.util.Calendar
 
@@ -171,6 +173,15 @@ fun SettingsScreen(
                     icon = Icons.Default.Logout,
                     onClick = { viewModel.showLogoutDialog() }
                 )
+            }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            
+            // Network & Sync Section
+            SettingsSection(title = "Network & Sync") {
+                NetworkStateCard(modifier = Modifier.padding(horizontal = 16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+                SyncStatusCard(modifier = Modifier.padding(horizontal = 16.dp))
             }
 
             Divider(modifier = Modifier.padding(vertical = 8.dp))

@@ -3,8 +3,11 @@ package com.studywise.ai.data.local.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.studywise.ai.data.local.converter.Converters
 import com.studywise.ai.data.local.dao.*
 import com.studywise.ai.data.local.entity.*
+import com.studywise.ai.data.local.entity.privacy.*
+import com.studywise.ai.data.local.entity.sync.*
 import com.studywise.ai.data.local.entity.verbaljournal.*
 
 @Database(
@@ -29,9 +32,14 @@ import com.studywise.ai.data.local.entity.verbaljournal.*
         SessionRecommendationEntity::class,
         DailyJournalPromptEntity::class,
         VerbalJournalAchievementEntity::class,
-        SpeechProgressSnapshotEntity::class
+        SpeechProgressSnapshotEntity::class,
+        SyncOperationEntity::class,
+        SyncConflictEntity::class,
+        // Privacy & Consent entities
+        ParentalConsentEntity::class,
+        ConsentAuditEntity::class
     ],
-    version = 7,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -47,6 +55,8 @@ abstract class StudyWiseDatabase : RoomDatabase() {
     abstract fun contentTemplateDao(): ContentTemplateDao
     abstract fun studentSkillMasteryDao(): StudentSkillMasteryDao
     abstract fun verbalJournalDao(): VerbalJournalDao
+    abstract fun syncDao(): SyncDao
+    abstract fun consentDao(): ConsentDao
     
     companion object {
         const val DATABASE_NAME = "studywise_database"

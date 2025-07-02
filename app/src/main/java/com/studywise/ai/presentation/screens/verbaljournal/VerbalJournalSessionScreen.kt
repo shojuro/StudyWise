@@ -1,5 +1,6 @@
 package com.studywise.ai.presentation.screens.verbaljournal
 
+import android.Manifest
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -24,12 +25,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.studywise.ai.domain.model.verbaljournal.*
 import com.studywise.ai.presentation.components.animations.SmoothTransitions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun VerbalJournalSessionScreen(
     sessionId: String,
@@ -41,58 +46,79 @@ fun VerbalJournalSessionScreen(
     val recordingState by viewModel.recordingState.collectAsStateWithLifecycle()
     val transcriptionState by viewModel.transcriptionState.collectAsStateWithLifecycle()
     
-    Scaffold(
-        topBar = {
-            VerbalJournalTopBar(
-                onNavigateBack = onNavigateBack,
-                phase = uiState.currentPhase,
-                isBreakInPeriod = uiState.isBreakInPeriod,
-                weekInProgram = uiState.weekInProgram
-            )
+    // Audio recording permission handling
+    val audioPermissionState = rememberPermissionState(
+        permission = Manifest.permission.RECORD_AUDIO
+    )
+    
+    // Request permission on first composition if not granted
+    LaunchedEffect(Unit) {
+        if (!audioPermissionState.status.isGranted && !audioPermissionState.status.shouldShowRationale) {
+            audioPermissionState.launchPermissionRequest()
         }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when {
-                uiState.isLoading -> {
-                    LoadingContent()
-                }
-                uiState.error != null -> {
-                    ErrorContent(
-                        error = uiState.error,
-                        onRetry = { viewModel.initializeSession(sessionId) }
-                    )
-                }
-                uiState.showTopicSelection -> {
-                    TopicSelectionContent(
-                        sessionType = uiState.selectedSessionType,
-                        suggestedTopics = uiState.suggestedTopics,
-                        dailyPrompt = uiState.dailyPrompt,
-                        onSelectSessionType = viewModel::selectSessionType,
-                        onSelectTopic = viewModel::selectTopic
-                    )
-                }
-                uiState.showResults -> {
-                    SessionResultsContent(
-                        analysis = uiState.sessionAnalysis,
-                        recommendations = uiState.recommendations,
-                        unlockedAchievements = uiState.unlockedAchievements,
-                        onNavigateBack = onNavigateBack
-                    )
-                }
-                else -> {
-                    ConversationContent(
-                        uiState = uiState,
-                        recordingState = recordingState,
-                        transcriptionState = transcriptionState,
-                        onToggleRecording = viewModel::toggleRecording,
-                        onRequestHint = viewModel::requestHint,
-                        onSkipPhase = viewModel::skipToNextPhase,
-                        onEndSession = viewModel::endSession
-                    )
+    }
+    
+    // Show permission dialog if needed
+    if (!audioPermissionState.status.isGranted) {
+        PermissionRequestContent(
+            onRequestPermission = { audioPermissionState.launchPermissionRequest() },
+            onNavigateBack = onNavigateBack,
+            showRationale = audioPermissionState.status.shouldShowRationale
+        )
+    } else {
+        Scaffold(
+            topBar = {
+                VerbalJournalTopBar(
+                    onNavigateBack = onNavigateBack,
+                    phase = uiState.currentPhase,
+                    isBreakInPeriod = uiState.isBreakInPeriod,
+                    weekInProgram = uiState.weekInProgram
+                )
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                when {
+                    uiState.isLoading -> {
+                        LoadingContent()
+                    }
+                    uiState.error != null -> {
+                        ErrorContent(
+                            error = uiState.error,
+                            onRetry = { viewModel.initializeSession(sessionId) }
+                        )
+                    }
+                    uiState.showTopicSelection -> {
+                        TopicSelectionContent(
+                            sessionType = uiState.selectedSessionType,
+                            suggestedTopics = uiState.suggestedTopics,
+                            dailyPrompt = uiState.dailyPrompt,
+                            onSelectSessionType = viewModel::selectSessionType,
+                            onSelectTopic = viewModel::selectTopic
+                        )
+                    }
+                    uiState.showResults -> {
+                        SessionResultsContent(
+                            analysis = uiState.sessionAnalysis,
+                            recommendations = uiState.recommendations,
+                            unlockedAchievements = uiState.unlockedAchievements,
+                            onNavigateBack = onNavigateBack
+                        )
+                    }
+                    else -> {
+                        ConversationContent(
+                            uiState = uiState,
+                            recordingState = recordingState,
+                            transcriptionState = transcriptionState,
+                            onToggleRecording = viewModel::toggleRecording,
+                            onRequestHint = viewModel::requestHint,
+                            onSkipPhase = viewModel::skipToNextPhase,
+                            onEndSession = viewModel::endSession
+                        )
+                    }
                 }
             }
         }
@@ -1129,6 +1155,78 @@ private fun RecommendationsCard(recommendations: List<SessionRecommendation>) {
                 }
                 if (recommendation != recommendations.last()) {
                     Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionRequestContent(
+    onRequestPermission: () -> Unit,
+    onNavigateBack: () -> Unit,
+    showRationale: Boolean
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                
+                Text(
+                    text = "Microphone Permission Required",
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
+                
+                Text(
+                    text = if (showRationale) {
+                        "The Verbal Journal needs access to your microphone to record your speech and provide feedback. Your recordings are processed locally and kept private."
+                    } else {
+                        "To practice speaking and get personalized feedback, the Verbal Journal needs access to your microphone."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Cancel")
+                    }
+                    
+                    Button(
+                        onClick = onRequestPermission,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Grant Permission")
+                    }
                 }
             }
         }

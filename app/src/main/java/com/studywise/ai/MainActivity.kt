@@ -9,7 +9,7 @@ import androidx.core.view.WindowCompat
 import com.studywise.ai.data.local.preferences.PreferencesManager
 import com.studywise.ai.domain.model.AnalyticsEvent
 import com.studywise.ai.domain.service.AnalyticsService
-import com.studywise.ai.presentation.navigation.StudyWiseNavigation
+import com.studywise.ai.presentation.StudyWiseApp
 import com.studywise.ai.presentation.theme.StudyWiseTheme
 import com.studywise.ai.presentation.theme.StudyWiseThemeSettings
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
                     highContrast = themeSettings.highContrast
                 )
             ) {
-                StudyWiseNavigation()
+                StudyWiseApp()
             }
         }
     }

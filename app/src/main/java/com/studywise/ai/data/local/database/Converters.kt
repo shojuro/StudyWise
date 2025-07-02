@@ -3,6 +3,7 @@ package com.studywise.ai.data.local.database
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.studywise.ai.data.local.entity.base.SyncStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -68,6 +69,23 @@ class Converters {
     fun toLocalDate(dateString: String?): LocalDate? {
         return dateString?.let {
             LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE)
+        }
+    }
+    
+    // SyncStatus converters
+    @TypeConverter
+    fun fromSyncStatus(status: SyncStatus?): String? {
+        return status?.name
+    }
+    
+    @TypeConverter
+    fun toSyncStatus(status: String?): SyncStatus? {
+        return status?.let { 
+            try {
+                SyncStatus.valueOf(it)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
         }
     }
 }

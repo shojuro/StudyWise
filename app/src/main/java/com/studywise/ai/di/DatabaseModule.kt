@@ -92,4 +92,22 @@ object DatabaseModule {
     fun provideStudentSkillMasteryDao(database: StudyWiseDatabase): StudentSkillMasteryDao {
         return database.studentSkillMasteryDao()
     }
+    
+    @Provides
+    @Singleton
+    fun provideVerbalJournalDao(database: StudyWiseDatabase): VerbalJournalDao {
+        return database.verbalJournalDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideSyncDao(database: StudyWiseDatabase): SyncDao {
+        return database.syncDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideConsentDao(database: StudyWiseDatabase): ConsentDao {
+        return database.consentDao()
+    }
 }

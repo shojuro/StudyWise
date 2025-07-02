@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.security.MessageDigest
+import java.time.LocalDate
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -48,7 +49,8 @@ class AuthRepositoryImpl @Inject constructor(
         password: String,
         role: String,
         grade: Int?,
-        parentId: String?
+        parentId: String?,
+        birthDate: LocalDate?
     ): Result<User> {
         return try {
             // Check if email already exists
@@ -67,6 +69,7 @@ class AuthRepositoryImpl @Inject constructor(
                 password = hashedPassword,
                 role = UserRole.valueOf(role),
                 grade = grade,
+                birthDate = birthDate,
                 createdAt = Date(),
                 parentId = parentId
             )
