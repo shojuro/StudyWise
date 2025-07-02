@@ -12,6 +12,7 @@ data class UserEntity(
     val name: String,
     val email: String,
     val password: String, // Will be hashed
+    val passwordHashType: String = "SHA256", // Track hash type for migration
     val role: UserRole,
     val grade: Int? = null, // Only for students
     val birthDate: LocalDate? = null, // For age verification and COPPA compliance

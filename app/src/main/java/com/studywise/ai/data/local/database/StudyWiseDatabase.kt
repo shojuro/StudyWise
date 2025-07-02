@@ -39,7 +39,7 @@ import com.studywise.ai.data.local.entity.verbaljournal.*
         ParentalConsentEntity::class,
         ConsentAuditEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

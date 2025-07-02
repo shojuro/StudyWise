@@ -4,12 +4,15 @@ import com.studywise.ai.data.local.dao.UserDao
 import com.studywise.ai.data.local.entity.UserEntity
 import com.studywise.ai.data.local.entity.UserRole
 import com.studywise.ai.data.local.preferences.PreferencesManager
+import com.studywise.ai.data.service.security.PasswordHashMigrator
 import com.studywise.ai.domain.model.User
 import com.studywise.ai.domain.repository.AuthRepository
+import com.studywise.ai.domain.service.security.HashType
+import com.studywise.ai.domain.service.security.PasswordHashingService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import java.security.MessageDigest
+import timber.log.Timber
 import java.time.LocalDate
 import java.util.*
 import javax.inject.Inject
@@ -18,27 +21,57 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val passwordHashingService: PasswordHashingService,
+    private val passwordHashMigrator: PasswordHashMigrator
 ) : AuthRepository {
 
     override suspend fun login(email: String, password: String): Result<User> {
         return try {
-            val hashedPassword = hashPassword(password)
-            val userEntity = userDao.getUserByCredentials(email, hashedPassword)
+            // Get user by email first
+            val userEntity = userDao.getUserByEmail(email)
             
             if (userEntity != null) {
-                userDao.updateLastLogin(userEntity.id, System.currentTimeMillis())
-                preferencesManager.updateUserSession(
-                    userId = userEntity.id,
-                    userEmail = userEntity.email,
-                    userName = userEntity.name,
-                    userRole = userEntity.role.name
-                )
-                Result.success(userEntity.toDomainModel())
+                // Verify password with current hash
+                val isPasswordValid = passwordHashingService.verifyPassword(password, userEntity.password)
+                
+                if (isPasswordValid) {
+                    // Check if password hash needs upgrade
+                    val (newHash, wasUpgraded) = passwordHashMigrator.migrateIfNeeded(
+                        userEntity.password, 
+                        password
+                    )
+                    
+                    // Update user if hash was upgraded
+                    if (wasUpgraded) {
+                        val updatedUser = userEntity.copy(
+                            password = newHash,
+                            passwordHashType = HashType.BCRYPT.name
+                        )
+                        userDao.updateUser(updatedUser)
+                        Timber.i("Password hash upgraded for user: ${userEntity.email}")
+                    }
+                    
+                    // Update last login
+                    userDao.updateLastLogin(userEntity.id, System.currentTimeMillis())
+                    
+                    // Update session
+                    preferencesManager.updateUserSession(
+                        userId = userEntity.id,
+                        userEmail = userEntity.email,
+                        userName = userEntity.name,
+                        userRole = userEntity.role.name
+                    )
+                    
+                    Result.success(userEntity.toDomainModel())
+                } else {
+                    Result.failure(Exception("Invalid email or password"))
+                }
             } else {
                 Result.failure(Exception("Invalid email or password"))
             }
         } catch (e: Exception) {
+            Timber.e(e, "Login failed")
             Result.failure(e)
         }
     }
@@ -61,12 +94,13 @@ class AuthRepositoryImpl @Inject constructor(
 
             // Create new user
             val userId = UUID.randomUUID().toString()
-            val hashedPassword = hashPassword(password)
+            val hashedPassword = passwordHashingService.hashPassword(password)
             val userEntity = UserEntity(
                 id = userId,
                 name = name,
                 email = email,
                 password = hashedPassword,
+                passwordHashType = HashType.BCRYPT.name,
                 role = UserRole.valueOf(role),
                 grade = grade,
                 birthDate = birthDate,
@@ -142,8 +176,12 @@ class AuthRepositoryImpl @Inject constructor(
             
             userId?.let { id ->
                 val user = userDao.getUserById(id)
-                if (user != null && user.password == hashPassword(oldPassword)) {
-                    val updatedUser = user.copy(password = hashPassword(newPassword))
+                if (user != null && passwordHashingService.verifyPassword(oldPassword, user.password)) {
+                    val newHashedPassword = passwordHashingService.hashPassword(newPassword)
+                    val updatedUser = user.copy(
+                        password = newHashedPassword,
+                        passwordHashType = HashType.BCRYPT.name
+                    )
                     userDao.updateUser(updatedUser)
                     Result.success(Unit)
                 } else {
@@ -173,11 +211,6 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun generateParentCode(parentId: String): String {
         return "PARENT-${parentId.take(8).uppercase()}"
-    }
-
-    private fun hashPassword(password: String): String {
-        val bytes = MessageDigest.getInstance("SHA-256").digest(password.toByteArray())
-        return bytes.joinToString("") { "%02x".format(it) }
     }
 
     private fun UserEntity.toDomainModel(): User {

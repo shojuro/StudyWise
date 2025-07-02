@@ -119,6 +119,9 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.coil.compose)
     
+    // Security
+    implementation("at.favre.lib:bcrypt:0.10.2")
+    
     // Accompanist
     implementation(libs.accompanist.permissions)
     implementation(libs.accompanist.systemuicontroller)
